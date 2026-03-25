@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAM — Game Engine Monthly</title>
+<meta name="description" content="JAM: la jam trimestrale di videogiochi narrativi creati con Level Engine. Crea, carica, vota. Ogni 3 mesi.">
+<meta name="author" content="JAM — Game Engine Monthly">
+<meta name="robots" content="index, follow">
+<!-- Open Graph (condivisione social) -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="JAM — Game Engine Monthly">
+<meta property="og:description" content="La jam trimestrale di videogiochi narrativi. Crea con Level Engine, carica e fatti votare dalla community. Gratis.">
+<meta property="og:url"         content="https://tuosito.netlify.app">
+<meta property="og:locale"      content="it_IT">
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary">
+<meta name="twitter:title"       content="JAM — Game Engine Monthly">
+<meta name="twitter:description" content="La jam trimestrale di videogiochi narrativi. Gratis.">
+<!-- Sicurezza: impedisce rilevazione MIME type errato -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<!-- Referrer policy per link uscenti -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><text y='24' font-size='20' fill='%2300ffcc' font-family='monospace' font-weight='bold'>G</text></svg>">
+<!-- Google Fonts — caricati come risorsa tecnica necessaria al funzionamento del sito.
+     Base giuridica: interesse legittimo (art. 6.1.f GDPR) per font essenziali all'interfaccia.
+     Google ha aggiornato il servizio Fonts nel 2022 per non loggare IP in modo persistente.
+     Dichiarato nella Privacy Policy e Cookie Policy. Soluzione alternativa: self-hosting
+     dei font (vedi readme.md). -->
+<!-- Google AdSense — script di verifica sito richiesto da Google.
+     Gli annunci vengono caricati solo dopo consenso esplicito dell'utente (vedi JS).
+     Il solo script di verifica non carica annunci né imposta cookie. -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2520863212003926"
+     crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   VARIABLES
+═══════════════════════════════════════════════ */
+:root {
+  --black:   #000;
+  --deep:    #050510;
+  --dark:    #0a0a1a;
+  --panel:   #0d0d20;
+  --border:  #1a1a3a;
+  --cyan:    #00ffcc;
+  --yellow:  #ffe600;
+  --magenta: #ff2aff;
+  --red:     #ff2244;
+  --blue:    #2277ff;
+  --white:   #ffffff;
+  --gray:    #556677;
+  --dim:     rgba(255,255,255,.38);
+  --px:  'Press Start 2P', monospace;
+  --orb: 'Orbitron', sans-serif;
+  --raj: 'Rajdhani', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box }
+html { scroll-behavior:smooth }
+body { font-family:var(--raj); color:var(--white); background:var(--black); overflow-x:hidden }
+a { color:inherit; text-decoration:none }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:8px; background:var(--dark) }
+::-webkit-scrollbar-thumb { background:var(--cyan) }
+
+/* Scanlines */
+body::after {
+  content:''; position:fixed; inset:0; z-index:9998; pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 1px,transparent 1px,transparent 3px);
+}
+
+/* CRT flicker */
+@keyframes crtFlicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.88} 94%{opacity:1} }
+body { animation:crtFlicker 8s step-end infinite }
+
+/* ═══ TICKER ═══ */
+.ticker { background:var(--cyan); overflow:hidden; white-space:nowrap; border-bottom:3px solid var(--black) }
+.ticker-inner {
+  display:inline-block;
+  animation:tickerMove 32s linear infinite;
+  font-family:var(--px); font-size:8px; color:var(--black);
+  letter-spacing:.06em; line-height:2.8; padding:0 24px;
+}
+@keyframes tickerMove { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+
+/* ═══ NAV ═══ */
+nav {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; height:52px;
+  background:var(--black); border-bottom:2px solid var(--cyan);
+}
+nav::before, nav::after {
+  content:''; position:absolute; bottom:-5px;
+  width:10px; height:5px; background:var(--cyan);
+}
+nav::before { left:0 } nav::after { right:0 }
+
+.logo {
+  font-family:var(--px); font-size:13px; color:var(--cyan); letter-spacing:.06em;
+  text-shadow:0 0 14px var(--cyan),0 0 28px rgba(0,255,204,.4);
+  display:flex; align-items:center; gap:12px;
+}
+.logo-sep { width:2px; height:18px; background:linear-gradient(var(--cyan),transparent) }
+.logo-sub { font-family:var(--orb); font-size:8px; color:var(--dim); letter-spacing:.18em; font-weight:400 }
+
+.nav-r { display:flex; gap:2px; align-items:center }
+.nav-r a {
+  font-family:var(--orb); font-size:9px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--dim); padding:6px 13px;
+  border:1px solid transparent; transition:all .15s;
+}
+.nav-r a:hover { color:var(--cyan); border-color:var(--cyan); background:rgba(0,255,204,.05); text-shadow:0 0 8px var(--cyan) }
+.nav-cta { background:var(--cyan) !important; color:var(--black) !important; border-color:var(--cyan) !important; font-weight:900 !important; margin-left:6px }
+.nav-cta:hover { background:var(--white) !important; border-color:var(--white) !important; text-shadow:none !important }
+
+/* ═══ HERO ═══ */
+.hero {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:80px 20px 60px;
+  background:var(--black); position:relative; overflow:hidden;
+}
+.hero-grid {
+  position:absolute; inset:0; pointer-events:none;
+  background-image:linear-gradient(rgba(0,255,204,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,.045) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.hero-glow { position:absolute; bottom:0; left:0; right:0; height:300px; pointer-events:none; background:linear-gradient(to top,rgba(0,255,204,.07) 0%,transparent 100%) }
+
+/* Speed lines */
+.hero-lines { position:absolute; inset:0; pointer-events:none; overflow:hidden }
+.hero-lines span { position:absolute; top:0; bottom:0; width:1px; background:linear-gradient(to bottom,transparent,rgba(0,255,204,.14),transparent); animation:lineDown 4s linear infinite }
+.hero-lines span:nth-child(1){left:10%;animation-duration:3.2s}
+.hero-lines span:nth-child(2){left:25%;animation-delay:.8s;animation-duration:4.5s;opacity:.5}
+.hero-lines span:nth-child(3){left:40%;animation-delay:1.6s;animation-duration:3.8s}
+.hero-lines span:nth-child(4){left:60%;animation-delay:.4s;animation-duration:4.1s;opacity:.5}
+.hero-lines span:nth-child(5){left:75%;animation-delay:2s;animation-duration:3.5s}
+.hero-lines span:nth-child(6){left:90%;animation-delay:1.2s;animation-duration:4.8s;opacity:.5}
+@keyframes lineDown { from{transform:translateY(-100%)} to{transform:translateY(100%)} }
+
+.hero-inner { position:relative; z-index:1; max-width:800px }
+
+.insert-coin {
+  font-family:var(--px); font-size:9px; color:var(--yellow);
+  letter-spacing:.2em; margin-bottom:32px; display:block;
+  animation:blinkFull 1.1s step-end infinite;
+}
+@keyframes blinkFull { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+.hero-title {
+  font-family:var(--px); font-size:clamp(34px,9vw,80px);
+  line-height:1.05; letter-spacing:.06em; color:var(--cyan);
+  text-shadow:0 0 24px var(--cyan),0 0 48px rgba(0,255,204,.4),4px 4px 0 rgba(0,255,204,.15);
+  margin-bottom:10px; position:relative; display:inline-block;
+}
+/* Chromatic aberration */
+.hero-title::before {
+  content:'JAM'; position:absolute; left:-3px; top:0;
+  color:var(--magenta); opacity:.35;
+  clip-path:polygon(0 0,100% 0,100% 42%,0 42%);
+}
+.hero-title::after {
+  content:'JAM'; position:absolute; left:3px; top:0;
+  color:var(--blue); opacity:.28;
+  clip-path:polygon(0 58%,100% 58%,100% 100%,0 100%);
+}
+
+.hero-subtitle {
+  font-family:var(--orb); font-size:clamp(11px,2.2vw,16px);
+  font-weight:900; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--yellow); margin-bottom:28px;
+  text-shadow:0 0 14px rgba(255,230,0,.35);
+}
+
+.hero-desc {
+  font-family:var(--raj); font-size:clamp(14px,2vw,18px);
+  color:rgba(255,255,255,.5); line-height:1.85;
+  max-width:500px; margin:0 auto 36px;
+}
+.hero-desc strong { color:var(--cyan) }
+
+/* Buttons */
+.hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:44px }
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--px); font-size:8px; letter-spacing:.08em; text-transform:uppercase;
+  padding:14px 22px; border:2px solid; cursor:pointer; transition:all .12s;
+  box-shadow:4px 4px 0 rgba(0,0,0,.8);
+}
+.btn:hover { transform:translate(-2px,-2px); box-shadow:6px 6px 0 rgba(0,0,0,.8) }
+.btn:active { transform:translate(2px,2px); box-shadow:2px 2px 0 rgba(0,0,0,.8) }
+.btn-prim { background:var(--cyan); color:var(--black); border-color:var(--cyan) }
+.btn-prim:hover { background:var(--white); border-color:var(--white) }
+.btn-sec { background:transparent; color:var(--yellow); border-color:var(--yellow); text-shadow:0 0 8px rgba(255,230,0,.3) }
+.btn-sec:hover { background:rgba(255,230,0,.08) }
+.btn-ghost { background:transparent; color:var(--dim); border-color:var(--border) }
+.btn-ghost:hover { border-color:var(--cyan); color:var(--cyan) }
+
+/* Countdown */
+.countdown-wrap {
+  display:inline-block; border:2px solid var(--cyan); padding:20px 36px;
+  background:rgba(0,255,204,.04); position:relative;
+}
+.countdown-wrap::before { content:''; position:absolute; top:-5px; right:-5px; width:9px; height:9px; background:var(--cyan) }
+.countdown-wrap::after  { content:''; position:absolute; bottom:-5px; left:-5px; width:9px; height:9px; background:var(--cyan) }
+.cd-label { font-family:var(--px); font-size:7px; color:var(--dim); letter-spacing:.14em; margin-bottom:16px }
+.cd-dials { display:flex; gap:0; align-items:center }
+.cd-unit  { text-align:center; min-width:64px }
+.cd-n { font-family:var(--px); font-size:clamp(20px,4vw,36px); color:var(--cyan); text-shadow:0 0 14px var(--cyan); display:block; line-height:1 }
+.cd-l { font-family:var(--orb); font-size:8px; color:var(--dim); letter-spacing:.14em; text-transform:uppercase; margin-top:6px }
+.cd-sep { font-family:var(--px); font-size:26px; color:var(--cyan); opacity:.5; padding:0 4px 8px; animation:blinkFull 1s step-end infinite }
+
+/* Hero stats */
+.hero-stats { display:flex; justify-content:center; gap:0; margin-top:36px; border:1px solid var(--border) }
+.hstat { flex:1; padding:16px 20px; text-align:center; border-right:1px solid var(--border); max-width:180px }
+.hstat:last-child { border-right:none }
+.hstat-n { font-family:var(--px); font-size:18px; display:block; line-height:1; margin-bottom:6px }
+.hstat-l { font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.1em; text-transform:uppercase }
+
+/* ═══ DIVIDER ═══ */
+.div-line { height:2px; background:linear-gradient(90deg,transparent,var(--cyan),transparent); opacity:.25 }
+
+/* ═══ SECTION SHARED ═══ */
+.section { padding:90px 20px; position:relative }
+.section-deep  { background:var(--deep) }
+.section-black { background:var(--black) }
+.section-panel { background:var(--dark) }
+.wrap { max-width:940px; margin:0 auto }
+.sec-tag {
+  font-family:var(--px); font-size:7px; letter-spacing:.16em; text-transform:uppercase;
+  display:inline-flex; align-items:center; gap:10px; margin-bottom:16px;
+}
+.sec-tag::before { content:''; width:16px; height:2px; background:currentColor }
+.sec-h { font-family:var(--px); font-size:clamp(14px,3vw,24px); line-height:1.55; letter-spacing:.04em; margin-bottom:14px }
+.sec-desc { font-family:var(--raj); font-size:16px; color:rgba(255,255,255,.45); line-height:1.85; max-width:500px; margin-bottom:48px }
+
+/* ═══ HOW IT WORKS ═══ */
+.phases { display:grid; grid-template-columns:1fr 1fr 1fr; border:2px solid var(--border) }
+.phase { padding:36px 28px; border-right:2px solid var(--border); position:relative; transition:background .2s }
+.phase:last-child { border-right:none }
+.phase:hover { background:rgba(0,255,204,.02) }
+.phase::after { content:''; position:absolute; top:-2px; left:-2px; width:0; height:0; background:var(--cyan); transition:width .25s,height .25s }
+.phase:hover::after { width:12px; height:12px }
+.phase-num { font-family:var(--px); font-size:8px; color:var(--cyan); letter-spacing:.1em; margin-bottom:20px; display:flex; align-items:center; gap:10px }
+.phase-num::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--cyan),transparent) }
+.phase h3 { font-family:var(--px); font-size:9px; color:var(--yellow); letter-spacing:.04em; margin-bottom:14px; line-height:1.7 }
+.phase p { font-family:var(--raj); font-size:14px; color:rgba(255,255,255,.42); line-height:1.9 }
+
+/* ═══ GALLERY ═══ */
+.round-header {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+  padding:13px 18px; border:2px solid var(--cyan); background:rgba(0,255,204,.04); margin-bottom:26px;
+}
+.round-id { font-family:var(--px); font-size:8px; color:var(--cyan); letter-spacing:.1em; display:flex; align-items:center; gap:10px }
+.round-dot { width:8px; height:8px; background:var(--cyan); box-shadow:0 0 8px var(--cyan); animation:blinkFull 1.2s step-end infinite }
+.round-period { font-family:var(--orb); font-size:10px; color:var(--dim); letter-spacing:.12em }
+
+.play-tabs { display:flex; gap:0; margin-bottom:26px; border:2px solid var(--border) }
+.play-tab {
+  font-family:var(--px); font-size:7px; letter-spacing:.08em; text-transform:uppercase;
+  padding:12px 22px; cursor:pointer; background:transparent; color:var(--dim);
+  border:none; border-right:2px solid var(--border); transition:all .15s;
+}
+.play-tab:last-child { border-right:none }
+.play-tab:hover { color:var(--cyan); background:rgba(0,255,204,.04) }
+.play-tab.active { background:var(--cyan); color:var(--black) }
+
+#gallery-panel,#upload-panel { display:none }
+#gallery-panel.active,#upload-panel.active { display:block }
+
+.gallery-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px }
+.gallery-count { font-family:var(--px); font-size:7px; color:var(--dim); letter-spacing:.1em }
+
+.games-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:2px; background:var(--border); border:2px solid var(--border);
+}
+.game-card { background:var(--deep); padding:24px; cursor:pointer; transition:background .15s; position:relative; overflow:hidden }
+.game-card:hover { background:var(--panel) }
+
+.gc-rank { position:absolute; top:0; right:0; font-family:var(--px); font-size:8px; background:var(--yellow); color:var(--black); padding:4px 8px }
+.gc-rank.top2 { background:rgba(200,200,255,.25); color:var(--white) }
+.gc-rank.top3 { background:rgba(255,120,0,.4); color:var(--white) }
+
+.gc-vote { margin-bottom:14px }
+.gc-vote-row { display:flex; align-items:baseline; gap:6px; margin-bottom:7px }
+.gc-score { font-family:var(--px); font-size:22px; color:var(--cyan); text-shadow:0 0 10px var(--cyan); line-height:1 }
+.gc-score-max { font-family:var(--px); font-size:8px; color:var(--dim) }
+.gc-vcount { font-family:var(--orb); font-size:9px; color:var(--dim); margin-left:auto; letter-spacing:.06em }
+.gc-bar { height:3px; background:rgba(255,255,255,.07) }
+.gc-bar-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--magenta)); transition:width .5s ease }
+
+.gc-title { font-family:var(--px); font-size:9px; color:var(--white); letter-spacing:.04em; margin-bottom:8px; line-height:1.6 }
+.gc-desc { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.38); line-height:1.7; margin-bottom:14px; min-height:34px }
+.gc-meta {
+  display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.06em;
+  border-top:1px solid var(--border); padding-top:12px; margin-bottom:14px;
+}
+.gc-play-btn {
+  display:block; width:100%; padding:11px;
+  font-family:var(--px); font-size:8px; letter-spacing:.06em; text-transform:uppercase;
+  border:2px solid var(--cyan); background:transparent; color:var(--cyan); cursor:pointer;
+  transition:all .12s; box-shadow:3px 3px 0 rgba(0,255,204,.15);
+}
+.gc-play-btn:hover { background:var(--cyan); color:var(--black); transform:translate(-1px,-1px); box-shadow:5px 5px 0 rgba(0,255,204,.15) }
+
+.gallery-empty { padding:80px 20px; text-align:center; background:var(--deep); border:2px solid var(--border) }
+.gallery-empty-h { font-family:var(--px); font-size:10px; color:var(--dim); letter-spacing:.08em; margin-bottom:14px }
+.gallery-empty-s { font-family:var(--raj); font-size:14px; color:rgba(255,255,255,.28) }
+.gallery-loading { padding:80px 20px; text-align:center; font-family:var(--px); font-size:8px; color:var(--cyan); letter-spacing:.16em; animation:blinkFull 1.2s step-end infinite }
+
+/* ═══ UPLOAD ═══ */
+.upload-card { max-width:520px; margin:0 auto; border:2px solid var(--border); padding:36px; background:var(--deep) }
+.upload-card-title { font-family:var(--px); font-size:9px; color:var(--yellow); letter-spacing:.08em; margin-bottom:28px; padding-bottom:16px; border-bottom:1px solid var(--border) }
+.uform-group { margin-bottom:18px }
+.uform-group label { display:block; font-family:var(--px); font-size:7px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-bottom:8px }
+.uform-group input[type=text],.uform-group input[type=password],.uform-group textarea {
+  width:100%; background:var(--black); border:2px solid var(--border);
+  color:var(--white); font-family:var(--raj); font-size:14px;
+  padding:10px 14px; outline:none; transition:border-color .15s;
+}
+.uform-group input:focus,.uform-group textarea:focus { border-color:var(--cyan) }
+.uform-group textarea { resize:vertical; min-height:72px; line-height:1.5 }
+.drop-zone { border:2px dashed var(--border); padding:36px 20px; text-align:center; cursor:pointer; transition:all .15s; background:var(--black); position:relative }
+.drop-zone:hover,.drop-zone.drag { border-color:var(--cyan); background:rgba(0,255,204,.03) }
+.drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100% }
+.drop-main { font-family:var(--px); font-size:8px; color:var(--dim); letter-spacing:.06em; margin-bottom:8px }
+.drop-sub  { font-family:var(--raj); font-size:12px; color:rgba(255,255,255,.22) }
+.drop-chosen { font-family:var(--px); font-size:8px; color:var(--cyan); margin-top:10px; display:none; text-shadow:0 0 8px var(--cyan) }
+.upload-submit {
+  width:100%; padding:15px; margin-top:8px;
+  font-family:var(--px); font-size:8px; letter-spacing:.08em; text-transform:uppercase;
+  border:2px solid var(--cyan); background:var(--cyan); color:var(--black); cursor:pointer;
+  transition:all .12s; box-shadow:4px 4px 0 rgba(0,255,204,.18);
+}
+.upload-submit:hover:not(:disabled) { background:var(--white); border-color:var(--white); transform:translate(-2px,-2px); box-shadow:6px 6px 0 rgba(0,255,204,.18) }
+.upload-submit:disabled { opacity:.35; cursor:not-allowed; box-shadow:none; transform:none }
+.upload-progress { width:100%; height:3px; background:var(--border); margin-top:12px; display:none; overflow:hidden }
+.upload-progress-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--magenta)); width:0%; transition:width .3s }
+.upload-notice { font-family:var(--raj); font-size:11px; color:rgba(255,255,255,.18); text-align:center; margin-top:14px; line-height:1.8 }
+
+/* ═══ EDITOR ═══ */
+.tool-grid { display:grid; grid-template-columns:1fr 1.2fr; gap:56px; align-items:start }
+.tool-feats { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+.tool-feat { font-family:var(--orb); font-size:9px; font-weight:700; letter-spacing:.1em; padding:6px 12px; border:1px solid var(--border); color:var(--dim); text-transform:uppercase }
+
+.win { border:2px solid var(--cyan); position:relative; box-shadow:6px 6px 0 rgba(0,255,204,.08) }
+.win::before { content:''; position:absolute; top:-5px; right:-5px; width:9px; height:9px; background:var(--cyan) }
+.win-bar { display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--cyan) }
+.win-dot { width:10px; height:10px; border-radius:50% }
+.win-dot-r{background:#ff3b30}.win-dot-y{background:#ffcc00}.win-dot-g{background:#28cd41}
+.win-title { font-family:var(--px); font-size:7px; color:var(--black); margin-left:8px; letter-spacing:.06em }
+.win-body { display:grid; grid-template-columns:150px 1fr; min-height:300px; background:var(--black) }
+.side { background:rgba(255,255,255,.02); border-right:1px solid var(--border); padding:10px 0 }
+.side-h { font-family:var(--px); font-size:6px; color:var(--dim); letter-spacing:.2em; text-transform:uppercase; padding:0 10px 10px }
+.nd { padding:7px 10px; font-family:var(--orb); font-size:9px; color:var(--dim); display:flex; align-items:center; gap:7px; cursor:default; transition:all .1s; letter-spacing:.04em }
+.nd:hover { background:rgba(255,255,255,.02); color:var(--white) }
+.nd.on { background:rgba(0,255,204,.1); color:var(--cyan) }
+.nd-d { width:5px; height:5px; background:currentColor; opacity:.35 }
+.nd.on .nd-d { opacity:1 }
+.detail { padding:12px; overflow-y:auto; max-height:340px }
+.ef-bar { display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border) }
+.ef-id { font-family:var(--px); font-size:8px; color:var(--cyan); letter-spacing:.04em }
+.ef-tag { font-family:var(--px); font-size:6px; padding:3px 8px; background:var(--cyan); color:var(--black) }
+.grp { margin-bottom:8px; border:1px solid var(--border); padding:10px; background:var(--deep) }
+.grp-t { font-family:var(--px); font-size:7px; color:var(--yellow); letter-spacing:.04em; margin-bottom:8px }
+.lbl { font-family:var(--orb); font-size:8px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; margin-top:6px }
+.lbl:first-child { margin-top:0 }
+.inp,.sel,.ta { width:100%; background:rgba(0,0,0,.6); border:1px solid var(--border); color:var(--white); font-family:var(--raj); font-size:11px; padding:6px 8px; outline:none }
+.ta { min-height:46px; resize:none; line-height:1.5 }
+.sel { -webkit-appearance:none; cursor:default }
+.chc { background:rgba(255,255,255,.018); border:1px solid var(--border); padding:8px; margin-bottom:4px }
+.chc-h { display:flex; justify-content:space-between; margin-bottom:5px }
+.chc-n { font-family:var(--px); font-size:7px; color:var(--yellow) }
+.chc-del { background:none; border:none; color:var(--red); font-size:12px; cursor:default }
+.addbtn { width:100%; padding:6px; font-family:var(--px); font-size:7px; border:1px dashed var(--border); background:none; color:var(--dim); cursor:default; margin-top:3px }
+
+/* ═══ DOWNLOAD ═══ */
+.dl-outer { border:2px solid var(--yellow); max-width:560px; margin:0 auto; position:relative; box-shadow:6px 6px 0 rgba(255,230,0,.12) }
+.dl-outer::before { content:'FREE'; position:absolute; top:-2px; right:24px; font-family:var(--px); font-size:8px; background:var(--yellow); color:var(--black); padding:5px 14px; transform:translateY(-50%); letter-spacing:.1em }
+.dl-inner { padding:44px 40px; text-align:center; background:var(--deep) }
+.dl-title { font-family:var(--px); font-size:14px; color:var(--yellow); letter-spacing:.06em; text-shadow:0 0 16px rgba(255,230,0,.35); margin-bottom:8px; line-height:1.5 }
+.dl-ver   { font-family:var(--orb); font-size:10px; color:var(--dim); letter-spacing:.22em; margin-bottom:18px }
+.dl-desc  { font-family:var(--raj); font-size:14px; color:rgba(255,255,255,.42); margin-bottom:28px; max-width:360px; margin-inline:auto; line-height:1.8 }
+.dl-tags  { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:20px }
+.dl-tag   { font-family:var(--orb); font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding:5px 12px; border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.35) }
+
+/* ═══ TOAST ═══ */
+#le-toast { position:fixed; bottom:28px; right:28px; z-index:9999; padding:13px 20px; font-family:var(--px); font-size:8px; font-weight:700; letter-spacing:.06em; transform:translateY(60px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; border:2px solid }
+#le-toast.show { transform:translateY(0); opacity:1 }
+#le-toast.ok  { background:var(--cyan); color:var(--black); border-color:var(--cyan) }
+#le-toast.err { background:var(--red);  color:var(--white); border-color:var(--red) }
+
+/* ═══ VOTE MODAL ═══ */
+#vote-modal { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.93); align-items:center; justify-content:center; padding:20px }
+#vote-modal.open { display:flex }
+.vote-box { background:var(--deep); border:2px solid var(--cyan); padding:40px; max-width:400px; width:100%; text-align:center; position:relative; box-shadow:8px 8px 0 rgba(0,255,204,.08) }
+.vote-box::before { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; background:var(--cyan) }
+.vote-box h3 { font-family:var(--px); font-size:9px; color:var(--cyan); letter-spacing:.06em; margin-bottom:8px; line-height:1.6 }
+.vote-box p  { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.32); margin-bottom:24px }
+.vote-label  { font-family:var(--px); font-size:7px; color:var(--dim); margin-bottom:8px; letter-spacing:.1em }
+.vote-current { font-family:var(--px); font-size:48px; color:var(--cyan); text-shadow:0 0 20px var(--cyan); line-height:1; margin-bottom:16px }
+.vote-slider { width:100%; -webkit-appearance:none; appearance:none; height:4px; background:var(--border); outline:none; margin-bottom:24px; cursor:pointer }
+.vote-slider::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; background:var(--cyan); cursor:pointer; border:3px solid var(--black); box-shadow:0 0 8px var(--cyan) }
+.vote-actions { display:flex; gap:10px; justify-content:center }
+.vote-cancel  { padding:10px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--border); background:none; color:rgba(255,255,255,.38); cursor:pointer; transition:all .12s }
+.vote-cancel:hover  { border-color:var(--red); color:var(--red) }
+.vote-confirm { padding:10px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--yellow); background:var(--yellow); color:var(--black); cursor:pointer; transition:all .12s }
+.vote-confirm:hover { background:var(--white); border-color:var(--white) }
+
+/* ═══ PLAYER ═══ */
+#gameWrap { display:none; position:fixed; inset:0; z-index:500; background:#000; flex-direction:column }
+#gameWrap.on { display:flex }
+#gameBar { flex:0; display:flex; align-items:center; justify-content:space-between; padding:6px 14px; background:var(--black); border-bottom:2px solid var(--cyan) }
+.gbar-l { display:flex; align-items:center; gap:10px }
+.gbar-title { font-family:var(--px); font-size:9px; color:var(--cyan); text-shadow:0 0 8px var(--cyan) }
+.gbar-btn { padding:6px 14px; font-family:var(--px); font-size:7px; border:2px solid; background:none; cursor:pointer; transition:all .12s; letter-spacing:.04em }
+.gbar-btn { border-color:var(--border); color:rgba(255,255,255,.45) }
+.gbar-btn:hover { border-color:var(--cyan); color:var(--cyan) }
+.gbar-exit { border-color:var(--red); color:var(--red) }
+.gbar-exit:hover { background:rgba(255,34,68,.08) }
+.gbar-vote-btn { border-color:var(--yellow); color:var(--yellow) }
+.gbar-vote-btn:hover { background:rgba(255,230,0,.06) }
+#gameFrame { flex:1; border:none; width:100%; height:100%; background:#000 }
+
+/* ═══ FOOTER ═══ */
+footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px 20px; text-align:center }
+.foot-brand { font-family:var(--px); font-size:10px; color:var(--cyan); text-shadow:0 0 12px var(--cyan); letter-spacing:.1em; margin-bottom:14px }
+.foot-links { display:inline-flex; border:1px solid var(--border); margin-bottom:12px }
+.foot-links a { font-family:var(--orb); font-size:9px; color:var(--dim); cursor:pointer; padding:6px 16px; letter-spacing:.08em; text-transform:uppercase; border-right:1px solid var(--border); transition:all .15s }
+.foot-links a:last-child { border-right:none }
+.foot-links a:hover { color:var(--cyan); background:rgba(0,255,204,.05) }
+.foot-copy { font-family:var(--raj); font-size:11px; color:rgba(255,255,255,.16); letter-spacing:.06em }
+
+/* ═══ LEGAL / COOKIE ═══ */
+.legal { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.97); overflow-y:auto; padding:60px 20px }
+.legal.open { display:block }
+.legal-in { max-width:560px; margin:0 auto; font-family:var(--raj); font-size:14px; color:rgba(255,255,255,.52); line-height:1.9 }
+.legal-in h2 { font-family:var(--px); font-size:12px; color:var(--cyan); margin-bottom:16px }
+.legal-in h3 { font-family:var(--px); font-size:9px; margin:18px 0 5px; color:var(--white) }
+.legal-in p  { margin-bottom:8px }
+.legal-in a  { color:var(--cyan) }
+.legal-x { position:fixed; top:14px; right:16px; z-index:201; font-family:var(--px); font-size:8px; color:var(--red); background:var(--black); border:2px solid var(--red); padding:7px 14px; cursor:pointer }
+#cookieBar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:var(--black); border-top:2px solid var(--yellow); padding:12px 20px; font-family:var(--raj); font-size:12px; color:rgba(255,255,255,.48) }
+#cookieBar.show { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap }
+#cookieBar a { color:var(--yellow); cursor:pointer }
+.ck-btn { padding:7px 18px; font-family:var(--px); font-size:7px; font-weight:700; background:var(--yellow); border:none; color:var(--black); cursor:pointer }
+
+/* ═══ REPORT ═══ */
+.gc-report-btn {
+  display:block; width:100%; padding:8px; margin-top:6px;
+  font-family:var(--px); font-size:7px; letter-spacing:.06em; text-transform:uppercase;
+  border:1px solid var(--border); background:transparent; color:var(--dim); cursor:pointer;
+  transition:all .12s;
+}
+.gc-report-btn:hover { border-color:var(--red); color:var(--red); background:rgba(255,34,68,.05) }
+.gbar-report-btn { border-color:var(--red) !important; color:var(--red) !important }
+.gbar-report-btn:hover { background:rgba(255,34,68,.08) !important }
+
+#report-modal { display:none; position:fixed; inset:0; z-index:700; background:rgba(0,0,0,.93); align-items:center; justify-content:center; padding:20px }
+#report-modal.open { display:flex }
+.report-box { background:var(--deep); border:2px solid var(--red); padding:36px; max-width:440px; width:100%; text-align:center; position:relative; box-shadow:8px 8px 0 rgba(255,34,68,.08) }
+.report-box::before { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; background:var(--red) }
+.report-box h3 { font-family:var(--px); font-size:9px; color:var(--red); letter-spacing:.06em; margin-bottom:8px; line-height:1.6 }
+.report-box p  { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.32); margin-bottom:20px; line-height:1.7 }
+.report-reasons { text-align:left; margin-bottom:20px }
+.report-reason { display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; transition:background .1s; border:1px solid transparent; margin-bottom:4px }
+.report-reason:hover { background:rgba(255,34,68,.04); border-color:var(--border) }
+.report-reason input[type=radio] { accent-color:var(--red); width:14px; height:14px; cursor:pointer }
+.report-reason label { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.5); cursor:pointer }
+.report-detail { width:100%; background:var(--black); border:2px solid var(--border); color:var(--white); font-family:var(--raj); font-size:13px; padding:10px 14px; outline:none; resize:vertical; min-height:60px; margin-bottom:20px; transition:border-color .15s }
+.report-detail:focus { border-color:var(--red) }
+.report-actions { display:flex; gap:10px; justify-content:center }
+.report-cancel { padding:10px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--border); background:none; color:rgba(255,255,255,.38); cursor:pointer; transition:all .12s }
+.report-cancel:hover { border-color:var(--cyan); color:var(--cyan) }
+.report-send { padding:10px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--red); background:var(--red); color:var(--white); cursor:pointer; transition:all .12s }
+.report-send:hover { background:var(--white); color:var(--red); border-color:var(--white) }
+
+.upload-disclaimer { display:flex; align-items:flex-start; gap:10px; margin:16px 0 8px; padding:12px; border:1px solid var(--border); background:rgba(255,34,68,.03) }
+.upload-disclaimer input[type=checkbox] { accent-color:var(--red); width:16px; height:16px; margin-top:2px; cursor:pointer; flex-shrink:0 }
+.upload-disclaimer label { font-family:var(--raj); font-size:12px; color:rgba(255,255,255,.4); line-height:1.7; cursor:pointer }
+.upload-disclaimer label a { color:var(--cyan); cursor:pointer }
+
+/* ═══ COOKIE CONSENT GDPR ═══ */
+#cookieConsent {
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.96); align-items:center; justify-content:center; padding:20px;
+}
+#cookieConsent.show { display:flex }
+.cc-box {
+  background:var(--panel); border:2px solid var(--cyan);
+  max-width:560px; width:100%; padding:36px;
+  box-shadow:8px 8px 0 rgba(0,255,204,.06); position:relative;
+}
+.cc-box::before { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; background:var(--cyan) }
+.cc-box::after  { content:''; position:absolute; bottom:-4px; left:-4px; width:8px; height:8px; background:var(--cyan) }
+.cc-title { font-family:var(--px); font-size:10px; color:var(--cyan); letter-spacing:.08em; margin-bottom:10px; text-shadow:0 0 10px var(--cyan) }
+.cc-desc  { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.48); line-height:1.85; margin-bottom:24px }
+.cc-desc a { color:var(--cyan); cursor:pointer }
+.cc-toggles { margin-bottom:24px; display:flex; flex-direction:column; gap:10px }
+.cc-toggle {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; border:1px solid var(--border); background:var(--deep);
+}
+.cc-toggle-info { flex:1 }
+.cc-toggle-name { font-family:var(--px); font-size:8px; color:var(--white); letter-spacing:.06em; margin-bottom:4px }
+.cc-toggle-desc { font-family:var(--raj); font-size:11px; color:rgba(255,255,255,.32); line-height:1.5 }
+.cc-switch { position:relative; width:44px; height:22px; flex-shrink:0; margin-left:14px }
+.cc-switch input { opacity:0; width:0; height:0 }
+.cc-slider {
+  position:absolute; inset:0; cursor:pointer;
+  background:var(--border); transition:.2s;
+}
+.cc-slider::before {
+  content:''; position:absolute; height:14px; width:14px;
+  left:4px; bottom:4px; background:rgba(255,255,255,.3); transition:.2s;
+}
+.cc-switch input:checked + .cc-slider { background:var(--cyan) }
+.cc-switch input:checked + .cc-slider::before { transform:translateX(22px); background:var(--black) }
+.cc-switch input:disabled + .cc-slider { opacity:.5; cursor:not-allowed }
+.cc-actions { display:flex; gap:10px; flex-wrap:wrap }
+.cc-btn-all {
+  flex:1; padding:13px; font-family:var(--px); font-size:7px; letter-spacing:.08em;
+  border:2px solid var(--cyan); background:var(--cyan); color:var(--black); cursor:pointer; transition:all .12s;
+}
+.cc-btn-all:hover { background:var(--white); border-color:var(--white) }
+.cc-btn-sel {
+  flex:1; padding:13px; font-family:var(--px); font-size:7px; letter-spacing:.08em;
+  border:2px solid var(--border); background:transparent; color:rgba(255,255,255,.5); cursor:pointer; transition:all .12s;
+}
+.cc-btn-sel:hover { border-color:var(--cyan); color:var(--cyan) }
+.cc-btn-rej {
+  width:100%; padding:9px; font-family:var(--orb); font-size:9px; letter-spacing:.08em;
+  border:1px solid var(--border); background:transparent; color:rgba(255,255,255,.28); cursor:pointer; transition:all .12s; margin-top:6px;
+}
+.cc-btn-rej:hover { color:rgba(255,255,255,.55) }
+/* Badge riapertura preferenze */
+#ccBadge {
+  display:none; position:fixed; bottom:14px; left:14px; z-index:140;
+  font-family:var(--px); font-size:7px; letter-spacing:.06em;
+  background:var(--black); border:1px solid var(--border); color:var(--dim);
+  padding:7px 13px; cursor:pointer; transition:all .15s;
+}
+#ccBadge:hover { border-color:var(--cyan); color:var(--cyan) }
+#ccBadge.show { display:block }
+
+/* ═══ ADS SECTION ═══ */
+.ads-section { background:var(--deep); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:24px 20px; text-align:center }
+.ads-label { font-family:var(--orb); font-size:8px; color:rgba(255,255,255,.18); letter-spacing:.18em; text-transform:uppercase; margin-bottom:10px }
+.ads-slot { display:inline-block; min-height:90px; width:100%; max-width:728px; background:rgba(255,255,255,.02); border:1px solid var(--border) }
+.ads-blocked { font-family:var(--raj); font-size:12px; color:rgba(255,255,255,.2); padding:28px 14px; line-height:1.7 }
+
+/* ═══ KOFI SECTION ═══ */
+.kofi-section {
+  background:var(--black); border-top:2px solid var(--border); padding:56px 20px; text-align:center;
+}
+.kofi-wrap { max-width:480px; margin:0 auto }
+.kofi-tag { font-family:var(--px); font-size:7px; color:var(--magenta); letter-spacing:.18em; text-transform:uppercase; margin-bottom:16px; display:flex; align-items:center; justify-content:center; gap:10px }
+.kofi-tag::before,.kofi-tag::after { content:''; width:24px; height:1px; background:var(--magenta) }
+.kofi-title { font-family:var(--px); font-size:clamp(11px,2.5vw,16px); color:var(--white); letter-spacing:.04em; margin-bottom:12px; line-height:1.6 }
+.kofi-desc { font-family:var(--raj); font-size:15px; color:rgba(255,255,255,.4); line-height:1.85; margin-bottom:28px }
+.kofi-btn {
+  display:inline-flex; align-items:center; gap:10px;
+  background:#FF5E5B; border:2px solid #FF5E5B; color:#fff;
+  font-family:var(--px); font-size:8px; letter-spacing:.08em;
+  padding:14px 26px; text-decoration:none; transition:all .12s;
+  box-shadow:4px 4px 0 rgba(255,94,91,.22);
+}
+.kofi-btn:hover { background:#fff; color:#FF5E5B; border-color:#FF5E5B; transform:translate(-2px,-2px); box-shadow:6px 6px 0 rgba(255,94,91,.22) }
+.kofi-btn svg { width:18px; height:18px; fill:currentColor; flex-shrink:0 }
+.kofi-tiers { display:flex; gap:2px; justify-content:center; margin-top:24px; flex-wrap:wrap; border:1px solid var(--border) }
+.kofi-tier { padding:12px 20px; border-right:1px solid var(--border); flex:1; min-width:100px }
+.kofi-tier:last-child { border-right:none }
+.kofi-tier-n { font-family:var(--px); font-size:12px; color:var(--magenta); display:block; margin-bottom:4px; text-shadow:0 0 8px rgba(255,42,255,.3) }
+.kofi-tier-l { font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.08em; text-transform:uppercase }
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.anim   { animation:fadeUp .6s ease both }
+.anim-1 { animation-delay:.1s }
+.anim-2 { animation-delay:.22s }
+.anim-3 { animation-delay:.36s }
+.anim-4 { animation-delay:.52s }
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:860px){
+  .tool-grid { grid-template-columns:1fr }
+  .win-body  { grid-template-columns:1fr } .side { display:none }
+}
+@media(max-width:700px){
+  nav { padding:0 14px } .logo-sub { display:none } .nav-r a { padding:5px 8px; font-size:8px }
+  .hero { padding:60px 14px 40px }
+  .phases { grid-template-columns:1fr }
+  .phase { border-right:none; border-bottom:2px solid var(--border) }
+  .phase:last-child { border-bottom:none }
+  .hstat { padding:12px } .hstat-n { font-size:14px }
+  .countdown-wrap { padding:16px 18px } .cd-n { font-size:22px } .cd-unit { min-width:48px }
+  .section { padding:56px 14px }
+  #gameBar { flex-direction:column; gap:6px }
+  .dl-inner { padding:32px 20px }
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <span class="ticker-inner">&gt;&gt; JAM &mdash; GAME ENGINE MONTHLY &lt;&lt; JAM TRIMESTRALE DI VIDEOGIOCHI NARRATIVI &gt;&gt; ROUND 1 ATTIVO &lt;&lt; PROSSIMA JAM: GIUGNO 2026 &gt;&gt; SCARICA LEVEL ENGINE &lt;&lt; CREA &gt;&gt; CARICA &lt;&lt; VOTA &gt;&gt; VINCI &lt;&lt; JAM &mdash; GAME ENGINE MONTHLY &gt;&gt; ROUND 1 ATTIVO &lt;&lt;</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    JAM
+    <span class="logo-sep"></span>
+    <span class="logo-sub">GAME ENGINE MONTHLY</span>
+  </div>
+  <div class="nav-r">
+    <a href="#come-funziona">COME FUNZIONA</a>
+    <a href="#giochi">GIOCHI</a>
+    <a href="#editor">EDITOR</a>
+    <a href="#download">SCARICA</a>
+    <a href="#supporta" style="color:var(--magenta)">SUPPORTA</a>
+    <a href="#giochi" class="nav-cta">GIOCA ORA</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-lines">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+
+  <div class="hero-inner">
+    <span class="insert-coin anim">&mdash; INSERT COIN &mdash;</span>
+
+    <div class="hero-title anim anim-1">JAM</div>
+
+    <div class="hero-subtitle anim anim-2">GAME ENGINE MONTHLY</div>
+
+    <p class="hero-desc anim anim-3">
+      La jam trimestrale di videogiochi narrativi.<br>
+      <strong>Ogni 3 mesi</strong> un nuovo round &mdash; crea il tuo gioco con Level Engine, caricalo e fatti votare dalla community.
+    </p>
+
+    <div class="hero-btns anim anim-3">
+      <a href="#giochi" class="btn btn-prim">GIOCA ORA</a>
+      <a href="#come-funziona" class="btn btn-sec">COME FUNZIONA</a>
+      <a href="#download" class="btn btn-ghost">SCARICA L'EDITOR</a>
+    </div>
+
+    <div class="countdown-wrap anim anim-4">
+      <div class="cd-label">&mdash; PROSSIMA JAM: GIUGNO 2026 &mdash;</div>
+      <div class="cd-dials">
+        <div class="cd-unit"><span class="cd-n" id="cd-d">--</span><div class="cd-l">GIORNI</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><span class="cd-n" id="cd-h">--</span><div class="cd-l">ORE</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><span class="cd-n" id="cd-m">--</span><div class="cd-l">MIN</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><span class="cd-n" id="cd-s">--</span><div class="cd-l">SEC</div></div>
+      </div>
+    </div>
+
+    <div class="hero-stats anim anim-4">
+      <div class="hstat">
+        <span class="hstat-n" style="color:var(--cyan)">4</span>
+        <span class="hstat-l">JAM / ANNO</span>
+      </div>
+      <div class="hstat">
+        <span class="hstat-n" style="color:var(--yellow)">3</span>
+        <span class="hstat-l">MESI / ROUND</span>
+      </div>
+      <div class="hstat">
+        <span class="hstat-n" style="color:var(--magenta)">0&euro;</span>
+        <span class="hstat-l">COSTO</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div-line"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section section-deep" id="come-funziona">
+  <div class="wrap">
+    <div class="sec-tag" style="color:var(--cyan)">COME FUNZIONA</div>
+    <h2 class="sec-h">TRE FASI.<br>UN VINCITORE.</h2>
+    <p class="sec-desc">Ogni trimestre un nuovo capitolo. Il ciclo e' semplice: crea, condividi, vota. Poi si ricomincia.</p>
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-num">FASE 01</div>
+        <h3>CREA IL TUO GIOCO</h3>
+        <p>Scarica Level Engine, l'editor ufficiale della JAM. Un singolo file HTML con editor visuale a nodi, sprite system e minigame engine. Zero codice richiesto.</p>
+      </div>
+      <div class="phase">
+        <div class="phase-num">FASE 02</div>
+        <h3>CARICA NELLA JAM</h3>
+        <p>Quando il tuo gioco e' pronto, caricalo nella galleria del round attivo. Tutti i giochi caricati entro la scadenza partecipano alla selezione finale.</p>
+      </div>
+      <div class="phase">
+        <div class="phase-num">FASE 03</div>
+        <h3>LA COMMUNITY VOTA</h3>
+        <p>Gioca ai giochi degli altri partecipanti e assegna un voto da 1 a 10. A fine round, il gioco con il punteggio medio piu' alto vince la JAM.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div-line"></div>
+
+<!-- GALLERY / PLAY -->
+<section class="section section-black" id="giochi">
+  <div class="wrap">
+    <div class="sec-tag" style="color:var(--yellow)">ROUND 1</div>
+    <h2 class="sec-h">GIOCHI IN GARA.</h2>
+
+    <div class="round-header">
+      <div class="round-id">
+        <div class="round-dot"></div>
+        ROUND 1 &mdash; ATTIVO
+      </div>
+      <div class="round-period">MAR 2026 &rarr; GIU 2026</div>
+    </div>
+
+    <div class="play-tabs">
+      <button class="play-tab active" onclick="showPlayTab('gallery', this)">GALLERIA</button>
+      <button class="play-tab" onclick="showPlayTab('upload', this)">CARICA IL TUO GIOCO</button>
+    </div>
+
+    <!-- GALLERY -->
+    <div id="gallery-panel" class="active">
+      <div class="gallery-bar">
+        <span class="gallery-count" id="gallery-count">CARICAMENTO...</span>
+      </div>
+      <div class="games-grid" id="games-grid">
+        <div class="gallery-loading">LOADING GAMES...</div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div id="upload-panel">
+      <div class="upload-card">
+        <div class="upload-card-title">CARICA UN GIOCO NELLA JAM</div>
+        <div class="uform-group">
+          <label>PASSWORD</label>
+          <input type="password" id="up-pwd" placeholder="Password richiesta per partecipare" autocomplete="off">
+        </div>
+        <div class="uform-group">
+          <label>TITOLO DEL GIOCO</label>
+          <input type="text" id="up-title" placeholder="es. Avventura nella Foresta">
+        </div>
+        <div class="uform-group">
+          <label>DESCRIZIONE</label>
+          <textarea id="up-desc" placeholder="Descrivi brevemente il gioco..."></textarea>
+        </div>
+        <div class="uform-group">
+          <label>IL TUO NOME (OPZIONALE)</label>
+          <input type="text" id="up-author" placeholder="es. Marco">
+        </div>
+        <div class="uform-group">
+          <label>FILE HTML DEL GIOCO</label>
+          <div class="drop-zone" id="up-drop">
+            <input type="file" id="up-file" accept=".html,.htm">
+            <div class="drop-main">CLICCA O TRASCINA IL FILE .HTML</div>
+            <div class="drop-sub">Solo file HTML &mdash; max 5 MB</div>
+            <div class="drop-chosen" id="up-chosen"></div>
+          </div>
+        </div>
+        <div class="upload-progress" id="up-progress">
+          <div class="upload-progress-fill" id="up-fill"></div>
+        </div>
+        <div class="upload-disclaimer">
+          <input type="checkbox" id="up-agree">
+          <label for="up-agree">Confermo che il gioco non contiene contenuti illegali, pornografici, violenti, discriminatori o che violano diritti di terzi. Accetto i <a onclick="closeL('terms');openL('terms')">Termini d'uso</a> e sono consapevole che contenuti non conformi verranno rimossi e potranno essere segnalati alle autorita' competenti.</label>
+        </div>
+        <button class="upload-submit" id="up-submit" onclick="uploadGame()">CARICA NELLA JAM</button>
+        <div class="upload-notice">Il file viene salvato su GitHub. Visibile nella galleria dopo pochi secondi.<br>Buona fortuna nella JAM!</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div-line"></div>
+
+<!-- EDITOR -->
+<section class="section section-panel" id="editor">
+  <div class="wrap">
+    <div class="tool-grid">
+      <div class="tool-text">
+        <div class="sec-tag" style="color:var(--magenta)">STRUMENTO UFFICIALE</div>
+        <h2 class="sec-h">LEVEL ENGINE.<br>L'EDITOR<br>DELLA JAM.</h2>
+        <p class="sec-desc">Tutti i giochi della JAM vengono creati con Level Engine: editor visuale completo in un singolo file HTML. Nessuna installazione, nessuna dipendenza.</p>
+        <div class="tool-feats">
+          <span class="tool-feat">EDITOR A NODI</span>
+          <span class="tool-feat">SPRITE + NPC</span>
+          <span class="tool-feat">MINIGAME</span>
+          <span class="tool-feat">INVENTARIO</span>
+          <span class="tool-feat">VARIABILI</span>
+          <span class="tool-feat">AUDIO + FX</span>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-bar">
+          <div class="win-dot win-dot-r"></div>
+          <div class="win-dot win-dot-y"></div>
+          <div class="win-dot win-dot-g"></div>
+          <div class="win-title">LEVEL ENGINE v8 &mdash; EDITOR</div>
+        </div>
+        <div class="win-body">
+          <div class="side">
+            <div class="side-h">NODI</div>
+            <div class="nd"><span class="nd-d"></span>intro</div>
+            <div class="nd on"><span class="nd-d"></span>foresta_oscura</div>
+            <div class="nd"><span class="nd-d"></span>incontro_elara</div>
+            <div class="nd"><span class="nd-d"></span>bivio_nord</div>
+            <div class="nd"><span class="nd-d"></span>finale_segreto</div>
+          </div>
+          <div class="detail">
+            <div class="ef-bar"><div class="ef-id">foresta_oscura</div><div class="ef-tag">TEXT</div></div>
+            <div class="grp">
+              <div class="grp-t">BASE</div>
+              <div class="lbl">NPC</div><input class="inp" value="Elara" readonly>
+              <div class="lbl">Testo</div><textarea class="ta" readonly>La foresta si fa piu' fitta. Una figura si muove tra gli alberi nell'ombra.</textarea>
+            </div>
+            <div class="grp">
+              <div class="grp-t">SCELTE</div>
+              <div class="chc">
+                <div class="chc-h"><span class="chc-n">Scelta 1</span><span class="chc-del">x</span></div>
+                <div class="lbl">Testo</div><input class="inp" value="Seguila nel buio" readonly>
+                <div class="lbl">Vai a</div><select class="sel" disabled><option>incontro_elara</option></select>
+              </div>
+              <div class="chc">
+                <div class="chc-h"><span class="chc-n">Scelta 2</span><span class="chc-del">x</span></div>
+                <div class="lbl">Testo</div><input class="inp" value="Fuggi verso nord" readonly>
+                <div class="lbl">Vai a</div><select class="sel" disabled><option>bivio_nord</option></select>
+              </div>
+              <button class="addbtn">+ AGGIUNGI SCELTA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div-line"></div>
+
+<!-- DOWNLOAD -->
+<section class="section section-black" id="download">
+  <div class="wrap" style="text-align:center">
+    <div class="sec-tag" style="color:var(--yellow);justify-content:center">DOWNLOAD</div>
+    <h2 class="sec-h" style="text-align:center;margin-bottom:36px">PARTECIPA<br>ALLA JAM.</h2>
+    <div class="dl-outer">
+      <div class="dl-inner">
+        <div class="dl-title">LEVEL ENGINE v8</div>
+        <div class="dl-ver">VERSIONE 8.0 &mdash; MIT OPEN SOURCE</div>
+        <p class="dl-desc">L'editor ufficiale della JAM. Editor visuale, play mode, sprite system, minigame engine e tutte le feature in un singolo file .html</p>
+        <a href="EditorTestuale_v2.html" download="LevelEngine_v8.html" class="btn btn-sec" style="margin:0 auto">SCARICA GRATIS</a>
+        <div class="dl-tags">
+          <span class="dl-tag">UN FILE .HTML</span>
+          <span class="dl-tag">MIT OPEN SOURCE</span>
+          <span class="dl-tag">FUNZIONA OFFLINE</span>
+          <span class="dl-tag">ZERO INSTALLAZIONI</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME PLAYER -->
+<div id="gameWrap">
+  <div id="gameBar">
+    <div class="gbar-l">
+      <button class="gbar-btn gbar-exit" onclick="closeGame()">X ESCI</button>
+      <span class="gbar-title" id="gTitle">GIOCO</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="gbar-btn gbar-report-btn" onclick="openReportFromPlayer()">SEGNALA</button>
+      <button class="gbar-btn gbar-vote-btn" onclick="openVoteModal()">VOTA</button>
+      <button class="gbar-btn" onclick="goFull()">FULLSCREEN</button>
+    </div>
+  </div>
+  <!-- SICUREZZA sandbox iframe:
+       - allow-scripts: necessario per eseguire i giochi HTML
+       - allow-modals: permette alert/confirm/prompt nei giochi
+       - allow-popups: permette eventuali link interni ai giochi
+       - RIMOSSO allow-same-origin: combinato con allow-scripts permetterebbe
+         a un gioco malevolo di accedere al localStorage del dominio padre.
+         I giochi vengono caricati da GitHub Pages (dominio diverso), quindi
+         l'assenza di allow-same-origin e' la scelta sicura corretta. -->
+  <iframe id="gameFrame" sandbox="allow-scripts allow-modals allow-popups"></iframe>
+</div>
+
+<!-- VOTE MODAL -->
+<div id="vote-modal">
+  <div class="vote-box">
+    <h3 id="vote-game-title">VOTA IL GIOCO</h3>
+    <p>Dai un voto da 1.0 a 10.0</p>
+    <div class="vote-label">IL TUO VOTO</div>
+    <div class="vote-current" id="vote-display">5.0</div>
+    <input type="range" class="vote-slider" id="vote-slider" min="10" max="100" value="50" oninput="updateVoteDisplay(this.value)">
+    <div class="vote-actions">
+      <button class="vote-cancel" onclick="closeVoteModal()">ANNULLA</button>
+      <button class="vote-confirm" onclick="submitVote()">CONFERMA</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div id="report-modal">
+  <div class="report-box">
+    <h3 id="report-game-title">SEGNALA CONTENUTO</h3>
+    <p>Se questo gioco contiene contenuti inappropriati, segnalalo. La segnalazione verra' inviata all'amministratore per la revisione.</p>
+    <div class="report-reasons">
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr1" value="Contenuto sessuale o pornografico"><label for="rr1">Contenuto sessuale o pornografico</label></div>
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr2" value="Violenza esplicita o gore"><label for="rr2">Violenza esplicita o gore</label></div>
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr3" value="Incitamento all'odio o discriminazione"><label for="rr3">Incitamento all'odio o discriminazione</label></div>
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr4" value="Contenuto illegale"><label for="rr4">Contenuto illegale</label></div>
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr5" value="Spam o contenuto non pertinente"><label for="rr5">Spam o contenuto non pertinente</label></div>
+      <div class="report-reason"><input type="radio" name="report-reason" id="rr6" value="Altro"><label for="rr6">Altro</label></div>
+    </div>
+    <textarea class="report-detail" id="report-detail" placeholder="Dettagli aggiuntivi (opzionale)..."></textarea>
+    <div class="report-actions">
+      <button class="report-cancel" onclick="closeReportModal()">ANNULLA</button>
+      <button class="report-send" onclick="submitReport()">INVIA SEGNALAZIONE</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="le-toast"></div>
+
+<!-- ADS — BANNER HEADER (visibile solo dopo consenso) -->
+<div class="ads-section" id="adsTop" style="display:none">
+  <div class="ads-label">Pubblicità</div>
+  <div class="ads-slot" id="adSlotTop">
+    <!-- Google AdSense Auto Ads — gli annunci vengono posizionati automaticamente da Google -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-2520863212003926"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <div class="ads-blocked">Per supportare questo progetto gratuito,<br>considera di disabilitare il tuo ad-blocker. Grazie!</div>
+  </div>
+</div>
+
+<!-- KO-FI SECTION -->
+<section class="kofi-section" id="supporta">
+  <div class="kofi-wrap">
+    <div class="kofi-tag">SUPPORTA IL PROGETTO</div>
+    <h2 class="kofi-title">JAM E' GRATUITA.<br>PUOI AIUTARLA A RESTARE TALE.</h2>
+    <p class="kofi-desc">
+      Nessun paywall, nessun account obbligatorio. Se la JAM ti piace e vuoi supportare lo sviluppo futuro di Level Engine e nuovi round, offrimi un caffe'.
+    </p>
+    <a href="https://ko-fi.com/leveljam" target="_blank" rel="noopener" class="kofi-btn">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.965-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 2.98.723 4.311zm6.173.478c-.928.116-1.682.028-1.682.028V7.284h1.77s1.971.551 1.971 2.638c0 1.913-.985 2.667-2.059 3.015z"/></svg>
+      OFFRIMI UN CAFFE' SU KO-FI
+    </a>
+    <div class="kofi-tiers">
+      <div class="kofi-tier">
+        <span class="kofi-tier-n">3&euro;</span>
+        <span class="kofi-tier-l">Un caffe'</span>
+      </div>
+      <div class="kofi-tier">
+        <span class="kofi-tier-n">9&euro;</span>
+        <span class="kofi-tier-l">Tre caffe'</span>
+      </div>
+      <div class="kofi-tier">
+        <span class="kofi-tier-n">Free</span>
+        <span class="kofi-tier-l">Condividi la JAM</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-brand">JAM &mdash; GAME ENGINE MONTHLY</div>
+  <div style="margin-bottom:10px">
+    <div class="foot-links">
+      <a onclick="openL('privacy')">PRIVACY</a>
+      <a onclick="openL('cookie')">COOKIE</a>
+      <a onclick="openL('terms')">TERMINI</a>
+      <a onclick="document.getElementById('cookieConsent').classList.add('show')">PREFERENZE COOKIE</a>
+    </div>
+  </div>
+  <div class="foot-copy">&copy; 2026 &mdash; Level Engine &mdash; Progetto open source MIT &mdash; Jam trimestrale dal 23 Marzo 2026</div>
+</footer>
+
+<!-- COOKIE CONSENT GDPR -->
+<div id="cookieConsent">
+  <div class="cc-box">
+    <div class="cc-title">🍪 PREFERENZE COOKIE</div>
+    <p class="cc-desc">
+      Questo sito usa tecnologie locali necessarie al funzionamento e, previo consenso, cookie pubblicitari di terze parti.<br>
+      Puoi modificare le tue scelte in qualsiasi momento dal footer. <a onclick="openL('cookie');document.getElementById('cookieConsent').classList.remove('show')">Leggi la Cookie Policy</a>.
+    </p>
+    <div class="cc-toggles">
+      <div class="cc-toggle">
+        <div class="cc-toggle-info">
+          <div class="cc-toggle-name">TECNICI (NECESSARI)</div>
+          <div class="cc-toggle-desc">Storage locale per anti-doppio-voto e preferenze. Non disattivabili perché necessari al funzionamento del sito.</div>
+        </div>
+        <label class="cc-switch">
+          <input type="checkbox" checked disabled>
+          <span class="cc-slider"></span>
+        </label>
+      </div>
+      <div class="cc-toggle">
+        <div class="cc-toggle-info">
+          <div class="cc-toggle-name">GOOGLE FONTS (BASE LEGALE: INTERESSE LEGITTIMO)</div>
+          <div class="cc-toggle-desc">Font tipografici necessari all'interfaccia, caricati da Google. Non richiedono consenso ma sono dichiarati per trasparenza. Google aggiornato dal 2022 per non loggare IP persistentemente.</div>
+        </div>
+        <label class="cc-switch">
+          <input type="checkbox" checked disabled title="Caricati con base legale interesse legittimo — non richiedono consenso">
+          <span class="cc-slider"></span>
+        </label>
+      </div>
+      <div class="cc-toggle">
+        <div class="cc-toggle-info">
+          <div class="cc-toggle-name">PUBBLICITÀ (GOOGLE ADSENSE) — CONSENSO RICHIESTO</div>
+          <div class="cc-toggle-desc">Annunci personalizzati tramite Google AdSense. Richiede il tuo consenso esplicito (art. 6.1.a GDPR). Puoi rifiutare senza compromettere il funzionamento del sito.</div>
+        </div>
+        <label class="cc-switch">
+          <input type="checkbox" id="cc-ads">
+          <span class="cc-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="cc-actions">
+      <button class="cc-btn-all" onclick="ccAcceptAll()">ACCETTA TUTTO</button>
+      <button class="cc-btn-sel" onclick="ccSaveSelection()">SALVA SELEZIONE</button>
+    </div>
+    <button class="cc-btn-rej" onclick="ccRejectAll()">Rifiuta cookie pubblicitari</button>
+  </div>
+</div>
+
+<!-- Badge riapertura preferenze cookie -->
+<div id="ccBadge" onclick="document.getElementById('cookieConsent').classList.add('show')">⚙ COOKIE</div>
+
+<!-- LEGAL -->
+<div class="legal" id="lprivacy"><button class="legal-x" onclick="closeL('privacy')">X CHIUDI</button><div class="legal-in"><h2>Privacy Policy</h2><p><strong>Aggiornamento:</strong> Marzo 2026</p><h3>Titolare del trattamento</h3><p>Progetto personale open source &mdash; JAM Game Engine Monthly. Per comunicazioni: tramite la repo GitHub del progetto (<a href="https://github.com/POLANGELA/gem-games-storage/issues" target="_blank" rel="noopener">apri una issue</a>).</p><h3>Dati personali raccolti</h3><p>Non sono presenti form di registrazione, sistemi di login o newsletter. Nessun dato personale identificativo viene raccolto direttamente dal sito.</p><h3>Archiviazione locale (localStorage / sessionStorage)</h3><p>Il sito usa storage locale del browser per finalita' tecniche: <strong>le_ok</strong> (accettazione banner), <strong>voted_[id]</strong> (anti-doppio-voto), <strong>cc_consent</strong> (preferenze cookie con timestamp). Tutti eliminabili dal browser in qualsiasi momento. Base giuridica: necessita' contrattuale / interesse legittimo.</p><h3>Google Fonts</h3><p>Il sito carica font tipografici dal servizio Google Fonts (Google Ireland Ltd), risorsa tecnica essenziale all'interfaccia visiva. Questo comporta la trasmissione dell'indirizzo IP del visitatore a Google. Base giuridica: <strong>interesse legittimo</strong> (art. 6.1.f GDPR) per il corretto funzionamento dell'interfaccia. Google ha aggiornato il servizio Fonts nel 2022 per non conservare indirizzi IP in modo persistente. Alternativa: chi preferisce evitare questa trasmissione puo' auto-ospitare i font scaricandoli da <a href="https://fonts.google.com" target="_blank" rel="noopener">fonts.google.com</a> e sostituendo il tag link nell'HTML. Info: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Google</a>.</p><h3>Pubblicita' (Google AdSense)</h3><p>Previo tuo consenso esplicito, il sito mostra annunci tramite Google AdSense (Google Ireland Ltd, Gordon House, Barrow Street, Dublin 4, Irlanda). Google puo' usare cookie per annunci personalizzati e misurazione. Il trasferimento dati verso USA avviene tramite Standard Contractual Clauses. Base giuridica: <strong>consenso esplicito</strong> (art. 6.1.a GDPR). Revocabile in qualsiasi momento dalle Preferenze Cookie nel footer. Info: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Google</a> &mdash; <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Gestione annunci</a>.</p><h3>Fingerprint tecnico anti-abuso voti</h3><p>Hash djb2 non reversibile generato da parametri pubblici del browser (risoluzione, lingua, fuso orario). Non identifica l'utente. Salvato in repo GitHub pubblica come stringa anonima. Base giuridica: interesse legittimo (art. 6.1.f GDPR) per integrita' del sistema di voto.</p><h3>File caricati (giochi)</h3><p>I file .html caricati vengono salvati su repo GitHub pubblica. Eseguiti nel browser tramite iframe con sandbox restrittivo (senza accesso allo storage del sito padre). Restano nella repo per tutta la durata del progetto. Rimozione: aprire issue su GitHub.</p><h3>Hosting e terze parti</h3><p><strong>Netlify</strong> (USA) &mdash; puo' raccogliere log tecnici (IP, user-agent). Trasferimento dati extra-UE tramite SCC. <a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener">Privacy Netlify</a>.</p><p><strong>GitHub</strong> (USA) &mdash; storage dei giochi e segnalazioni. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Privacy GitHub</a>.</p><h3>Conservazione dei dati</h3><p>Storage locale: senza scadenza fissa, eliminabile dal browser. Consenso cookie: 13 mesi. Giochi su GitHub: durata del progetto. Fingerprint voti: legati al gioco, rimossi con esso.</p><h3>Diritti dell'utente (GDPR artt. 15-22)</h3><p>Hai diritto di accesso, rettifica, cancellazione, limitazione, portabilita' e opposizione. Per lo storage locale: elimina i dati del sito dal browser. Per i dati GitHub: apri issue nella repo. Per i dati Google: <a href="https://myaccount.google.com/data-and-privacy" target="_blank" rel="noopener">Il mio account Google</a>. Puoi proporre reclamo al <strong>Garante Privacy italiano</strong>: <a href="https://www.gpdp.it" target="_blank" rel="noopener">www.gpdp.it</a>, Piazza Venezia 11, 00187 Roma.</p></div></div>
+<div class="legal" id="lcookie"><button class="legal-x" onclick="closeL('cookie')">X CHIUDI</button><div class="legal-in"><h2>Cookie e Storage Policy</h2><p><strong>Aggiornamento:</strong> Marzo 2026</p><h3>Cosa utilizza questo sito</h3><p>Questo sito usa storage locale tecnico (necessario, senza consenso) e cookie pubblicitari di terze parti (solo con consenso esplicito). Non usa cookie di tracciamento propri.</p><h3>Storage locale tecnico (sempre attivo)</h3><p><strong>le_ok</strong> (localStorage) &mdash; registra che hai visto il banner informativo. Nessun dato personale.</p><p><strong>voted_[id]</strong> (localStorage + sessionStorage) &mdash; impedisce di votare due volte. Valore: solo "1". Nessun dato personale.</p><p><strong>cc_consent</strong> (localStorage) &mdash; salva le tue preferenze cookie con timestamp di data. Scade dopo 13 mesi.</p><p>Base giuridica: necessita' tecnica / interesse legittimo. Esenti da consenso ai sensi dell'art. 5.3 Direttiva ePrivacy 2002/58/CE e Linee Guida Garante italiano 10/06/2021.</p><h3>Google Fonts (interesse legittimo — nessun consenso richiesto)</h3><p>Il sito carica font da Google Fonts (Google Ireland Ltd) come risorsa tecnica essenziale all'interfaccia. Questo comporta la trasmissione dell'IP del visitatore a Google. Base giuridica: <strong>interesse legittimo</strong> (art. 6.1.f GDPR). Google ha aggiornato il servizio nel 2022 per non conservare IP in modo persistente. Dichiarato nel banner per trasparenza. Chi desidera evitare questa trasmissione puo' chiedere al gestore del sito di adottare il self-hosting dei font.</p><h3>Google AdSense (consenso esplicito richiesto)</h3><p>Se accetti, il sito carica script di Google AdSense che usano cookie per mostrare annunci personalizzati e misurarne l'efficacia. Google puo' combinare questi dati con altre informazioni. Base giuridica: <strong>consenso esplicito</strong> (art. 6.1.a GDPR). Revocabile in qualsiasi momento dalle Preferenze Cookie nel footer senza conseguenze. Per maggiori info: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Privacy</a> &mdash; <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Gestione preferenze annunci</a>.</p><h3>Fingerprint anonimo anti-abuso</h3><p>Hash non reversibile da parametri pubblici del browser per prevenire voti multipli. Non e' un cookie, non e' memorizzato sul dispositivo, solo su GitHub come stringa anonima.</p><h3>Terze parti di hosting</h3><p><strong>Netlify</strong> &mdash; log tecnici (IP, user-agent). <a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener">Privacy Netlify</a>. <strong>GitHub</strong> &mdash; storage giochi/segnalazioni. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Privacy GitHub</a>.</p><h3>Come gestire le preferenze</h3><p>Clicca su <strong>"Preferenze Cookie"</strong> nel footer per modificare il consenso AdSense in qualsiasi momento. Per eliminare tutti i dati locali: Impostazioni browser &rarr; Dati dei siti &rarr; Elimina dati per questo sito.</p></div></div>
+<div class="legal" id="lterms"><button class="legal-x" onclick="closeL('terms')">X CHIUDI</button><div class="legal-in"><h2>Termini d'uso</h2><p><strong>Aggiornamento:</strong> Marzo 2026</p><h3>Licenza</h3><p>Il codice sorgente del sito e di Level Engine e' rilasciato con licenza MIT. Uso, copia, modifica liberi.</p><h3>Uso del sito e eta' minima</h3><p>Il sito e i giochi vengono forniti "cosi' com'e'", senza garanzie. I file caricati dai partecipanti vengono eseguiti localmente nel browser tramite iframe sandboxed. <strong>Questo sito e' destinato a utenti di eta' pari o superiore a 16 anni.</strong> L'uso da parte di minori di 16 anni richiede il consenso verificabile di un genitore o tutore legale, ai sensi dell'art. 8 GDPR e del Codice Privacy italiano (D.Lgs. 196/2003 come modificato dal D.Lgs. 101/2018). Se sei un minore, non caricare dati personali e non partecipare alla JAM senza il consenso di un adulto responsabile.</p><h3>Contenuti vietati</h3><p>E' <strong>severamente vietato</strong> caricare giochi o contenuti che includano:</p><p>&bull; Materiale sessualmente esplicito o pornografico di qualsiasi tipo<br>&bull; Materiale pedopornografico o che sfrutti minori (CSAM) &mdash; verra' immediatamente segnalato alle autorita' competenti (Polizia Postale, NCMEC CyberTipline)<br>&bull; Violenza gratuita, gore, torture o contenuti disturbanti<br>&bull; Incitamento all'odio, discriminazione, razzismo, antisemitismo<br>&bull; Promozione del terrorismo o dell'estremismo violento<br>&bull; Contenuti diffamatori o che violano la privacy o l'immagine di terzi<br>&bull; Violazione di diritti d'autore, marchi o altra proprieta' intellettuale<br>&bull; Malware, script malevoli, tentativi di phishing o exploit<br>&bull; Spam o contenuti non pertinenti alla JAM<br>&bull; Dati personali di terzi pubblicati senza consenso (doxxing)</p><h3>Responsabilita' dell'utente</h3><p>Chi carica un gioco e' l'unico responsabile del suo contenuto ai sensi dell'art. 14 del Digital Services Act (Reg. UE 2022/2065) e degli artt. 14-15 della Direttiva 2000/31/CE. Caricando un file, l'utente dichiara di avere i diritti necessari e che il contenuto rispetta questi termini e le leggi vigenti.</p><h3>Conservazione dei dati (Data Retention)</h3><p>I giochi caricati rimangono nella repo GitHub per tutta la durata del progetto. Puoi richiedere la rimozione del tuo gioco aprendo una issue nella <a href="https://github.com/POLANGELA/gem-games-storage/issues" target="_blank" rel="noopener">repo GitHub</a>. Il consenso cookie viene conservato per 13 mesi, dopo i quali viene richiesto nuovamente. I dati di voto (fingerprint anonimo) sono legati al gioco e vengono rimossi con esso.</p><h3>Sistema di voto</h3><p>Ogni utente puo' esprimere un solo voto per gioco. Il sistema utilizza storage locale e fingerprint anonimo del browser. Qualsiasi tentativo di manipolazione dei voti e' contrario a questi termini.</p><h3>Pubblicita'</h3><p>Il sito puo' mostrare annunci tramite Google AdSense esclusivamente previo consenso esplicito dell'utente, in conformita' al GDPR. Gli annunci non influenzano in alcun modo i contenuti editoriali o i risultati della JAM.</p><h3>Segnalazione e rimozione — Notice &amp; Takedown</h3><p>Ai sensi del Digital Services Act (art. 16 Reg. UE 2022/2065), chiunque puo' segnalare contenuti illegali o inappropriati tramite il pulsante <strong>"SEGNALA"</strong> presente su ogni gioco oppure aprendo una issue sulla repo GitHub. L'amministratore si impegna a: esaminare ogni segnalazione tempestivamente; rimuovere prontamente contenuti che violano questi termini; segnalare alle autorita' competenti contenuti di natura penale (CSAM, terrorismo, violenza).</p><h3>Limitazione di responsabilita'</h3><p>Il sito opera come hosting provider ai sensi dell'art. 6 DSA (Reg. UE 2022/2065) e dell'art. 14 Dir. 2000/31/CE. Non e' responsabile dei contenuti caricati da terzi fino a quando non ne viene a conoscenza e, una volta notificato, agisce prontamente per rimuoverli.</p><h3>Legge applicabile e foro competente</h3><p>Si applica la legge italiana. Per le controversie con consumatori, e' competente il foro del luogo di residenza del consumatore. E' possibile ricorrere alla piattaforma europea ODR: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>.</p></div></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIGURAZIONE SICURA
+//  Il token GitHub NON e' qui — sta nelle variabili
+//  d'ambiente di Netlify (pannello Site configuration).
+//
+//  ⚠️  SICUREZZA — UPLOAD_PASSWORD:
+//  Questa password e' visibile nel sorgente pubblico.
+//  E' accettabile perche' la verifica REALE avviene
+//  lato server nel proxy (github-proxy.js), che legge
+//  UPLOAD_PASSWORD dalle variabili d'ambiente Netlify.
+//  Qui serve solo come UX guard (evita richieste inutili).
+//  NON inserire mai qui il token GitHub.
+// ════════════════════════════════════════════════════════
+const GITHUB_REPO     = 'POLANGELA/gem-games-storage';
+const UPLOAD_PASSWORD = 'gem2026'; // verifica reale: lato server nel proxy
+// ════════════════════════════════════════════════════════
+
+const PROXY      = '/.netlify/functions/github-proxy';
+const GAMES_JSON = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/games.json`;
+
+let allGames      = [];
+let currentGameId = null;
+
+// ── COUNTDOWN ──
+(function(){
+  const next=new Date('2026-06-23T00:00:00');
+  function tick(){
+    const diff=next-new Date();
+    if(diff<=0){['cd-d','cd-h','cd-m','cd-s'].forEach(id=>document.getElementById(id).textContent='00');return;}
+    const pad=n=>String(Math.floor(n)).padStart(2,'0');
+    document.getElementById('cd-d').textContent=pad(diff/864e5);
+    document.getElementById('cd-h').textContent=pad((diff%864e5)/36e5);
+    document.getElementById('cd-m').textContent=pad((diff%36e5)/6e4);
+    document.getElementById('cd-s').textContent=pad((diff%6e4)/1e3);
+  }
+  tick(); setInterval(tick,1000);
+})();
+
+// ── COOKIE CONSENT GDPR ──
+// Google Fonts è caricato sempre nell'<head> con base giuridica "interesse legittimo"
+// (art. 6.1.f GDPR) in quanto risorsa tecnica essenziale all'interfaccia.
+// Google AdSense richiede invece consenso esplicito (art. 6.1.a GDPR).
+(function(){
+
+  function applyConsent(consent){
+    // Google AdSense — caricato SOLO dopo consenso esplicito
+    if(consent.ads){
+      document.getElementById('adsTop').style.display = 'block';
+      if(!document.getElementById('adsense-script')){
+        const s = document.createElement('script');
+        s.id = 'adsense-script';
+        s.async = true;
+        // Publisher ID: ca-pub-2520863212003926
+        s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2520863212003926';
+        s.crossOrigin = 'anonymous';
+        document.head.appendChild(s);
+        // Attiva Auto Ads dopo il caricamento dello script
+        s.addEventListener('load', function(){
+          try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){}
+        });
+      }
+    } else {
+      document.getElementById('adsTop').style.display = 'none';
+    }
+  }
+
+  function showConsent(){
+    document.getElementById('cookieConsent').classList.add('show');
+    document.getElementById('ccBadge').classList.remove('show');
+  }
+
+  function hideConsent(){
+    document.getElementById('cookieConsent').classList.remove('show');
+    document.getElementById('ccBadge').classList.add('show');
+  }
+
+  function getConsent(){
+    try { return JSON.parse(localStorage.getItem('cc_consent')); } catch{ return null; }
+  }
+
+  function saveConsent(consent){
+    // Salva con timestamp — il consenso scade dopo 13 mesi (best practice GDPR)
+    const record = { ...consent, savedAt: new Date().toISOString() };
+    localStorage.setItem('cc_consent', JSON.stringify(record));
+    localStorage.setItem('le_ok','1');
+    applyConsent(consent);
+    hideConsent();
+  }
+
+  window.ccAcceptAll = function(){
+    document.getElementById('cc-ads').checked = true;
+    saveConsent({ads:true});
+  };
+  window.ccRejectAll = function(){
+    document.getElementById('cc-ads').checked = false;
+    saveConsent({ads:false});
+  };
+  window.ccSaveSelection = function(){
+    saveConsent({ ads: document.getElementById('cc-ads').checked });
+  };
+
+  // Init: controlla consenso salvato e scadenza (13 mesi)
+  const stored = getConsent();
+  if(!stored){
+    showConsent();
+  } else {
+    const savedAt = stored.savedAt ? new Date(stored.savedAt) : null;
+    const expired = !savedAt || (Date.now() - savedAt.getTime() > 34164000000); // 13 mesi
+    if(expired){
+      localStorage.removeItem('cc_consent');
+      showConsent();
+    } else {
+      document.getElementById('cc-ads').checked = !!stored.ads;
+      applyConsent(stored);
+      document.getElementById('ccBadge').classList.add('show');
+    }
+  }
+})();
+
+function openL(x){ document.getElementById('l'+x).classList.add('open'); document.body.style.overflow='hidden' }
+function closeL(x){ document.getElementById('l'+x).classList.remove('open'); document.body.style.overflow='' }
+
+// ── TABS ──
+function showPlayTab(tab, btn){
+  document.querySelectorAll('.play-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#gallery-panel,#upload-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(tab+'-panel').classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// ── GITHUB HELPERS ──
+async function ghGet(path){
+  const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',path})});
+  if(!r.ok) throw new Error('gh_get_fail');
+  return r.json();
+}
+async function ghPut(path,content_b64,message,sha,pwd,type){
+  const body={action:'put',path,content:content_b64,message,password:pwd||'',type:type||'upload'};
+  if(sha) body.sha=sha;
+  const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json();throw new Error(e.error||e.message||'gh_put_fail')}
+  return r.json();
+}
+function toB64(s){ return btoa(unescape(encodeURIComponent(s))) }
+function fromB64(s){ return decodeURIComponent(escape(atob(s.replace(/\n/g,'')))) }
+async function readGamesJson(){
+  try{const d=await ghGet('games.json');return{games:JSON.parse(fromB64(d.content)),sha:d.sha}}
+  catch{return{games:[],sha:null}}
+}
+async function writeGamesJson(games,sha,message,pwd){
+  await ghPut('games.json',toB64(JSON.stringify(games,null,2)),message,sha,pwd||'',pwd?'upload':'vote');
+}
+
+// ── LOAD GALLERY ──
+async function loadGames(){
+  const grid=document.getElementById('games-grid');
+  try{
+    const res=await fetch(GAMES_JSON+'?t='+Date.now());
+    if(!res.ok) throw new Error('empty');
+    allGames=await res.json();
+    renderGallery();
+  }catch{
+    allGames=[];
+    grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM &mdash; scarica Level Engine e crea il tuo gioco.</div></div>';
+    document.getElementById('gallery-count').textContent='0 GIOCHI IN GARA';
+  }
+}
+
+function renderGallery(){
+  const grid=document.getElementById('games-grid');
+  const count=allGames.length;
+  document.getElementById('gallery-count').textContent=count+' GIOCH'+(count===1?'O':'I')+' IN GARA';
+  if(!count){
+    grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM.</div></div>';
+    return;
+  }
+  const sorted=[...allGames].sort((a,b)=>{
+    const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
+    return avg(b)-avg(a);
+  });
+  // Usa data-* attributes invece di onclick inline con dati utente → elimina XSS
+  grid.innerHTML=sorted.map((g,i)=>{
+    const votes=g.votes||[];
+    const avg=votes.length?votes.reduce((a,b)=>a+b,0)/votes.length:null;
+    const score=avg!==null?avg.toFixed(1):'--';
+    const fill=avg!==null?(avg/10*100)+'%':'0%';
+    const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
+    const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const rankLabel='#'+(i+1)+(i===0?' TOP':'');
+    // SICUREZZA: esc() su tutto il testo HTML; id/title/file passati via data-* (attributi escaped da esc())
+    // I dati sensibili per JS (id, title, url) vengono letti da data-* nel click handler,
+    // non interpolati inline nell'onclick — nessun rischio di escape dal contesto JS
+    return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
+      <div class="gc-rank ${rankClass}">${rankLabel}</div>
+      <div class="gc-vote">
+        <div class="gc-vote-row">
+          <span class="gc-score">${score}</span>
+          <span class="gc-score-max">/10</span>
+          <span class="gc-vcount">${votes.length} VOT${votes.length===1?'O':'I'}</span>
+        </div>
+        <div class="gc-bar"><div class="gc-bar-fill" style="width:${fill}"></div></div>
+      </div>
+      <div class="gc-title">${esc(g.title)}</div>
+      <div class="gc-desc">${esc(g.description||'Nessuna descrizione.')}</div>
+      <div class="gc-meta">
+        <span>${esc(g.author||'ANONIMO')}</span>
+        <span>${date}</span>
+      </div>
+      <button class="gc-play-btn js-play-btn">GIOCA</button>
+      <button class="gc-report-btn js-report-btn">SEGNALA</button>
+    </div>`;
+  }).join('');
+
+  // Event delegation: un solo listener sul container, sicuro per qualsiasi dato
+  grid.addEventListener('click', function handler(e){
+    const card = e.target.closest('.game-card');
+    if(!card) return;
+    const id    = card.dataset.id    || '';
+    const title = card.dataset.title || '';
+    const file  = card.dataset.file  || '';
+    if(e.target.classList.contains('js-play-btn')){
+      openGame(id, title, file);
+    } else if(e.target.classList.contains('js-report-btn')){
+      e.stopPropagation();
+      openReportModal(id, title);
+    }
+  }, {once: true}); // riregistrato ad ogni renderGallery()
+}
+
+// ── GAME PLAYER ──
+function openGame(id,title,url){
+  currentGameId=id;
+  document.getElementById('gTitle').textContent=title.toUpperCase();
+  document.getElementById('gameFrame').src=url;
+  document.getElementById('gameWrap').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeGame(){
+  document.getElementById('gameWrap').classList.remove('on');
+  document.getElementById('gameFrame').src='about:blank';
+  document.body.style.overflow='';
+  currentGameId=null;
+}
+function goFull(){ document.getElementById('gameWrap').requestFullscreen?.() }
+
+// ── VOTE ──
+function openVoteModal(){
+  if(!currentGameId) return;
+  const g=allGames.find(x=>x.id===currentGameId);
+  if(!g) return;
+  document.getElementById('vote-game-title').textContent='VOTA: '+g.title.toUpperCase();
+  document.getElementById('vote-slider').value=50;
+  document.getElementById('vote-display').textContent='5.0';
+  document.getElementById('vote-modal').classList.add('open');
+}
+function closeVoteModal(){ document.getElementById('vote-modal').classList.remove('open') }
+function updateVoteDisplay(v){ document.getElementById('vote-display').textContent=(v/10).toFixed(1) }
+
+// ── FINGERPRINT ANTI-DOPPIO VOTO ──
+function getVoterFingerprint(){
+  const raw=[
+    navigator.userAgent||'',
+    navigator.language||'',
+    screen.width+'x'+screen.height,
+    screen.colorDepth||'',
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency||'',
+    navigator.maxTouchPoints||0,
+    (navigator.languages||[]).join(',')
+  ].join('|');
+  // Simple hash (djb2)
+  let h=5381;
+  for(let i=0;i<raw.length;i++) h=((h<<5)+h)+raw.charCodeAt(i);
+  return 'fp_'+(h>>>0).toString(36);
+}
+
+function hasAlreadyVoted(gameId){
+  // Layer 1: localStorage
+  if(localStorage.getItem('voted_'+gameId)) return true;
+  // Layer 2: sessionStorage (sopravvive a reload ma non a chiusura browser)
+  if(sessionStorage.getItem('voted_'+gameId)) return true;
+  // Layer 3: check fingerprint nei voti salvati su GitHub (server-side)
+  return false;
+}
+
+function markAsVoted(gameId){
+  localStorage.setItem('voted_'+gameId,'1');
+  sessionStorage.setItem('voted_'+gameId,'1');
+}
+
+async function submitVote(){
+  const score=parseInt(document.getElementById('vote-slider').value)/10;
+  if(hasAlreadyVoted(currentGameId)){toast('HAI GIA\' VOTATO','err');closeVoteModal();return;}
+  closeVoteModal();
+  toast('SALVATAGGIO...','ok');
+  try{
+    const fp=getVoterFingerprint();
+    const {games,sha}=await readGamesJson();
+    const idx=games.findIndex(g=>g.id===currentGameId);
+    if(idx===-1) return toast('GIOCO NON TROVATO','err');
+    if(!games[idx].votes) games[idx].votes=[];
+    if(!games[idx].voters) games[idx].voters=[];
+    // Layer 3: controllo fingerprint lato dati
+    if(games[idx].voters.includes(fp)){
+      markAsVoted(currentGameId);
+      toast('HAI GIA\' VOTATO','err');
+      return;
+    }
+    games[idx].votes.push(Math.round(score*10)/10);
+    games[idx].voters.push(fp);
+    await writeGamesJson(games,sha,`Voto su: ${games[idx].title}`);
+    markAsVoted(currentGameId);
+    toast('VOTO: '+score.toFixed(1)+'/10','ok');
+    allGames=games; renderGallery();
+  }catch(e){ toast('ERRORE: '+e.message,'err') }
+}
+
+// ── UPLOAD ──
+document.getElementById('up-file').addEventListener('change',function(){
+  const d=document.getElementById('up-chosen');
+  if(this.files[0]){d.textContent='> '+this.files[0].name;d.style.display='block';}
+});
+const udz=document.getElementById('up-drop');
+udz.addEventListener('dragover',e=>{e.preventDefault();udz.classList.add('drag')});
+udz.addEventListener('dragleave',()=>udz.classList.remove('drag'));
+udz.addEventListener('drop',()=>udz.classList.remove('drag'));
+
+async function uploadGame(){
+  const pwd   =document.getElementById('up-pwd').value.trim();
+  const title =document.getElementById('up-title').value.trim();
+  const desc  =document.getElementById('up-desc').value.trim();
+  const author=document.getElementById('up-author').value.trim();
+  const file  =document.getElementById('up-file').files[0];
+  if(pwd!==UPLOAD_PASSWORD) return toast('PASSWORD ERRATA','err');
+  if(!document.getElementById('up-agree').checked) return toast('ACCETTA I TERMINI D\'USO','err');
+  if(!title) return toast('TITOLO MANCANTE','err');
+  if(!file)  return toast('SELEZIONA UN FILE','err');
+  if(!file.name.match(/\.html?$/i)) return toast('SOLO FILE .HTML','err');
+  if(file.size>5*1024*1024) return toast('MAX 5MB','err');
+  const btn=document.getElementById('up-submit');
+  const bar=document.getElementById('up-progress');
+  const fill=document.getElementById('up-fill');
+  btn.disabled=true; btn.textContent='CARICAMENTO...';
+  bar.style.display='block'; fill.style.width='15%';
+  try{
+    const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    fill.style.width='35%';
+    const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
+    const gameId=Date.now()+'_'+safeFile;
+    const gamePath=`games/${gameId}`;
+    await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,pwd);
+    fill.style.width='65%';
+    const {games,sha}=await readGamesJson();
+    const rawUrl=`https://polangela.github.io/gem-games-storage/${gamePath}`;
+    games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],uploadedAt:new Date().toISOString()});
+    await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,pwd);
+    fill.style.width='100%';
+    toast('GIOCO CARICATO!','ok');
+    ['up-pwd','up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('up-file').value='';
+    document.getElementById('up-chosen').style.display='none';
+    allGames=games; renderGallery();
+    setTimeout(()=>showPlayTab('gallery', document.querySelector('.play-tab')),1200);
+  }catch(e){ toast('ERRORE: '+e.message,'err') }
+  finally{
+    btn.disabled=false; btn.textContent='CARICA NELLA JAM';
+    setTimeout(()=>{bar.style.display='none';fill.style.width='0%'},1000);
+  }
+}
+
+// ── REPORT ──
+let reportGameId=null;
+let reportGameTitle='';
+
+function openReportModal(id,title){
+  reportGameId=id;
+  reportGameTitle=title;
+  document.getElementById('report-game-title').textContent='SEGNALA: '+title.toUpperCase();
+  document.querySelectorAll('input[name="report-reason"]').forEach(r=>r.checked=false);
+  document.getElementById('report-detail').value='';
+  document.getElementById('report-modal').classList.add('open');
+}
+function openReportFromPlayer(){
+  if(!currentGameId) return;
+  const g=allGames.find(x=>x.id===currentGameId);
+  if(!g) return;
+  openReportModal(g.id,g.title);
+}
+function closeReportModal(){ document.getElementById('report-modal').classList.remove('open'); reportGameId=null; }
+
+async function submitReport(){
+  const reason=document.querySelector('input[name="report-reason"]:checked');
+  if(!reason){ toast('SELEZIONA UN MOTIVO','err'); return; }
+  const detail=document.getElementById('report-detail').value.trim();
+  const rkey='reported_'+reportGameId;
+  if(localStorage.getItem(rkey)){ toast('GIA\' SEGNALATO','err'); closeReportModal(); return; }
+  closeReportModal();
+  toast('INVIO SEGNALAZIONE...','ok');
+  try{
+    const reportData={
+      gameId:reportGameId,
+      gameTitle:reportGameTitle,
+      reason:reason.value,
+      detail:detail||'(nessun dettaglio)',
+      timestamp:new Date().toISOString()
+    };
+    // Salva la segnalazione come file nella repo GitHub via proxy
+    const reportId=Date.now()+'_'+reportGameId.substring(0,20);
+    const reportPath=`reports/${reportId}.json`;
+    const content=toB64(JSON.stringify(reportData,null,2));
+    await ghPut(reportPath,content,`SEGNALAZIONE: ${reportGameTitle} — ${reason.value}`,undefined,'','report');
+    localStorage.setItem(rkey,'1');
+    toast('SEGNALAZIONE INVIATA','ok');
+  }catch(e){
+    // Fallback: se la cartella reports non esiste o c'è un errore,
+    // salva la segnalazione dentro games.json come campo del gioco
+    try{
+      const {games,sha}=await readGamesJson();
+      const idx=games.findIndex(g=>g.id===reportGameId);
+      if(idx!==-1){
+        if(!games[idx].reports) games[idx].reports=[];
+        games[idx].reports.push({reason:reason.value,detail:detail||'',timestamp:new Date().toISOString()});
+        await writeGamesJson(games,sha,`SEGNALAZIONE: ${reportGameTitle}`);
+        localStorage.setItem(rkey,'1');
+        toast('SEGNALAZIONE INVIATA','ok');
+        return;
+      }
+    }catch{}
+    toast('ERRORE INVIO','err');
+  }
+}
+
+// ── TOAST ──
+function toast(msg,type){
+  const t=document.getElementById('le-toast');
+  t.textContent=msg; t.className='show '+type;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='',4000);
+}
+
+// ── UTILS ──
+function esc(s=''){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
+
+// ── INIT ──
+loadGames();
+console.log('%c JAM','font-size:22px;font-weight:bold;color:#00ffcc;font-family:monospace');
+console.log('%cGame Engine Monthly — Jam trimestrale dal 23 Marzo 2026.','font-size:11px;color:#ffe600');
+</script>
+</body>
+</html>

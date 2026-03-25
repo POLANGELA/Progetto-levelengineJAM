@@ -1,0 +1,9 @@
+User-agent: *
+# Blocca i bot dall'accesso alle funzioni serverless
+Disallow: /.netlify/
+
+# Il sito è pubblico e indicizzabile
+Allow: /
+
+# Sitemap (opzionale — aggiungere se si crea un sitemap.xml)
+# Sitemap: https://tuodominio.netlify.app/sitemap.xml
