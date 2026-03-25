@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JAM — Game Engine Monthly</title>
-<meta name="description" content="JAM: la jam trimestrale di videogiochi narrativi creati con Level Engine. Crea, carica, vota. Ogni 3 mesi.">
-<meta name="author" content="JAM — Game Engine Monthly">
+<title>The Never Code Jam</title>
+<meta name="description" content="The Never Code Jam: la jam trimestrale di videogiochi narrativi creati con Level Engine. Crea, carica, vota. Ogni 3 mesi.">
+<meta name="author" content="The Never Code Jam">
 <meta name="robots" content="index, follow">
 <!-- Open Graph (condivisione social) -->
 <meta property="og:type"        content="website">
-<meta property="og:title"       content="JAM — Game Engine Monthly">
-<meta property="og:description" content="La jam trimestrale di videogiochi narrativi. Crea con Level Engine, carica e fatti votare dalla community. Gratis.">
+<meta property="og:title"       content="The Never Code Jam">
+<meta property="og:description" content="The Never Code Jam: game jam trimestrale di videogiochi narrativi. Crea, carica, vota. Gratis.">
 <meta property="og:url"         content="https://tuosito.netlify.app">
 <meta property="og:locale"      content="it_IT">
 <!-- Twitter Card -->
 <meta name="twitter:card"        content="summary">
-<meta name="twitter:title"       content="JAM — Game Engine Monthly">
-<meta name="twitter:description" content="La jam trimestrale di videogiochi narrativi. Gratis.">
+<meta name="twitter:title"       content="The Never Code Jam">
+<meta name="twitter:description" content="The Never Code Jam. Game jam trimestrale. Gratis.">
 <!-- Sicurezza: impedisce rilevazione MIME type errato -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <!-- Referrer policy per link uscenti -->
@@ -159,12 +159,12 @@ nav::before { left:0 } nav::after { right:0 }
 }
 /* Chromatic aberration */
 .hero-title::before {
-  content:'JAM'; position:absolute; left:-3px; top:0;
+  content:'NCJ'; position:absolute; left:-3px; top:0;
   color:var(--magenta); opacity:.35;
   clip-path:polygon(0 0,100% 0,100% 42%,0 42%);
 }
 .hero-title::after {
-  content:'JAM'; position:absolute; left:3px; top:0;
+  content:'NCJ'; position:absolute; left:3px; top:0;
   color:var(--blue); opacity:.28;
   clip-path:polygon(0 58%,100% 58%,100% 100%,0 100%);
 }
@@ -610,15 +610,15 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
 <!-- TICKER -->
 <div class="ticker">
-  <span class="ticker-inner">&gt;&gt; JAM &mdash; GAME ENGINE MONTHLY &lt;&lt; JAM TRIMESTRALE DI VIDEOGIOCHI NARRATIVI &gt;&gt; ROUND 1 ATTIVO &lt;&lt; PROSSIMA JAM: GIUGNO 2026 &gt;&gt; SCARICA LEVEL ENGINE &lt;&lt; CREA &gt;&gt; CARICA &lt;&lt; VOTA &gt;&gt; VINCI &lt;&lt; JAM &mdash; GAME ENGINE MONTHLY &gt;&gt; ROUND 1 ATTIVO &lt;&lt;</span>
+  <span class="ticker-inner">&gt;&gt; THE NEVER CODE JAM &lt;&lt; JAM TRIMESTRALE DI VIDEOGIOCHI NARRATIVI &gt;&gt; ROUND 1 ATTIVO &lt;&lt; PROSSIMA JAM: GIUGNO 2026 &gt;&gt; SCARICA LEVEL ENGINE &lt;&lt; CREA &gt;&gt; CARICA &lt;&lt; VOTA &gt;&gt; VINCI &lt;&lt; JAM &mdash; THE NEVER CODE JAM &gt;&gt; ROUND 1 ATTIVO &lt;&lt;</span>
 </div>
 
 <!-- NAV -->
 <nav>
   <div class="logo">
-    JAM
+    THE NEVER CODE JAM
     <span class="logo-sep"></span>
-    <span class="logo-sub">GAME ENGINE MONTHLY</span>
+    <span class="logo-sub">THE NEVER CODE JAM</span>
   </div>
   <div class="nav-r">
     <a href="#come-funziona">COME FUNZIONA</a>
@@ -642,9 +642,9 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
   <div class="hero-inner">
     <span class="insert-coin anim">&mdash; INSERT COIN &mdash;</span>
 
-    <div class="hero-title anim anim-1">JAM</div>
+    <div class="hero-title anim anim-1">THE NEVER CODE JAM</div>
 
-    <div class="hero-subtitle anim anim-2">GAME ENGINE MONTHLY</div>
+    <div class="hero-subtitle anim anim-2">GAME JAM TRIMESTRALE</div>
 
     <p class="hero-desc anim anim-3">
       La jam trimestrale di videogiochi narrativi.<br>
@@ -984,7 +984,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
 <!-- FOOTER -->
 <footer>
-  <div class="foot-brand">JAM &mdash; GAME ENGINE MONTHLY</div>
+  <div class="foot-brand">THE NEVER CODE JAM</div>
   <div style="margin-bottom:10px">
     <div class="foot-links">
       <a onclick="openL('privacy')">PRIVACY</a>
@@ -993,7 +993,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
       <a onclick="document.getElementById('cookieConsent').classList.add('show')">PREFERENZE COOKIE</a>
     </div>
   </div>
-  <div class="foot-copy">&copy; 2026 &mdash; Level Engine &mdash; Progetto open source MIT &mdash; Jam trimestrale dal 23 Marzo 2026</div>
+  <div class="foot-copy">&copy; 2026 &mdash; Level Engine &mdash; Progetto open source MIT &mdash; The Never Code Jam dal 23 Marzo 2026</div>
 </footer>
 
 <!-- COOKIE CONSENT GDPR -->
@@ -1498,7 +1498,7 @@ function esc(s=''){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 // ── INIT ──
 loadGames();
 console.log('%c JAM','font-size:22px;font-weight:bold;color:#00ffcc;font-family:monospace');
-console.log('%cGame Engine Monthly — Jam trimestrale dal 23 Marzo 2026.','font-size:11px;color:#ffe600');
+console.log('%cThe Never Code Jam — dal 23 Marzo 2026.','font-size:11px;color:#ffe600');
 </script>
 </body>
 </html>
