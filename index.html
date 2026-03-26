@@ -579,104 +579,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 .kofi-tier-n { font-family:var(--px); font-size:12px; color:var(--magenta); display:block; margin-bottom:4px; text-shadow:0 0 8px rgba(255,42,255,.3) }
 .kofi-tier-l { font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.08em; text-transform:uppercase }
 
-/* ═══ HALL OF FAME ═══ */
-.hof-grid {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:2px; background:var(--border); border:2px solid var(--border);
-}
-.hof-card {
-  background:var(--deep); padding:24px; cursor:pointer; transition:background .15s;
-  position:relative; overflow:hidden;
-  border-top:3px solid transparent;
-}
-.hof-card.winner-1 { border-top-color:var(--yellow) }
-.hof-card.winner-2 { border-top-color:rgba(180,180,255,.6) }
-.hof-card.winner-3 { border-top-color:rgba(255,120,50,.7) }
-.hof-card:hover { background:var(--panel) }
-.hof-badge {
-  position:absolute; top:0; right:0;
-  font-family:var(--px); font-size:7px; padding:4px 8px; color:var(--black);
-}
-.hof-badge.g1 { background:var(--yellow) }
-.hof-badge.g2 { background:rgba(180,180,255,.7); color:var(--black) }
-.hof-badge.g3 { background:rgba(255,140,60,.8) }
-.hof-round { font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px }
-.hof-score { font-family:var(--px); font-size:24px; color:var(--yellow); text-shadow:0 0 12px rgba(255,230,0,.35); line-height:1; margin-bottom:4px }
-.hof-title { font-family:var(--px); font-size:9px; color:var(--white); letter-spacing:.04em; margin:10px 0 6px; line-height:1.6 }
-.hof-desc { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.38); line-height:1.7; margin-bottom:12px; min-height:34px }
-.hof-meta { font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.06em; border-top:1px solid var(--border); padding-top:10px; margin-bottom:12px }
-.hof-play-btn {
-  display:block; width:100%; padding:10px;
-  font-family:var(--px); font-size:7px; letter-spacing:.06em;
-  border:2px solid var(--yellow); background:transparent; color:var(--yellow); cursor:pointer;
-  transition:all .12s;
-}
-.hof-play-btn:hover { background:var(--yellow); color:var(--black) }
-.hof-empty { padding:60px 20px; text-align:center; background:var(--deep); border:2px solid var(--border) }
-.hof-empty-h { font-family:var(--px); font-size:9px; color:var(--dim); letter-spacing:.08em; margin-bottom:10px }
-.hof-empty-s { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.25) }
-
-/* ═══ SEARCH ═══ */
-.gallery-search-wrap { position:relative; margin-bottom:16px }
-.gallery-search {
-  width:100%; background:var(--black); border:2px solid var(--border);
-  color:var(--white); font-family:var(--raj); font-size:14px;
-  padding:10px 14px 10px 40px; outline:none; transition:border-color .15s;
-}
-.gallery-search:focus { border-color:var(--cyan) }
-.gallery-search::placeholder { color:rgba(255,255,255,.2) }
-.gallery-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--dim); pointer-events:none }
-.gallery-search-clear {
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  background:none; border:none; color:var(--dim); cursor:pointer; font-family:var(--px); font-size:8px; padding:4px 8px;
-  display:none;
-}
-.gallery-search-clear.visible { display:block }
-.gallery-search-clear:hover { color:var(--red) }
-.gallery-sort {
-  background:var(--black); border:2px solid var(--border);
-  color:var(--white); font-family:var(--orb); font-size:9px; letter-spacing:.06em;
-  padding:8px 12px; outline:none; cursor:pointer; transition:border-color .15s;
-}
-.gallery-sort:focus { border-color:var(--cyan) }
-
-/* ═══ UPLOAD MODAL / PASSWORD ═══ */
-/* ═══ DELETE MODAL ═══ */
-#del-modal { display:none; position:fixed; inset:0; z-index:700; background:rgba(0,0,0,.95); align-items:center; justify-content:center; padding:20px }
-#del-modal.open { display:flex }
-.del-box {
-  background:var(--deep); border:2px solid var(--red); padding:40px;
-  max-width:440px; width:100%; text-align:center; position:relative;
-  box-shadow:8px 8px 0 rgba(255,34,68,.08);
-}
-.del-box::before { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; background:var(--red) }
-.del-box h3 { font-family:var(--px); font-size:10px; color:var(--red); letter-spacing:.06em; margin-bottom:10px; line-height:1.6 }
-.del-box p  { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.45); margin-bottom:20px; line-height:1.7 }
-.del-game-name { font-family:var(--px); font-size:8px; color:var(--yellow); margin-bottom:20px; padding:10px; border:1px solid var(--border); letter-spacing:.04em }
-.del-pwd-input {
-  width:100%; background:var(--black); border:2px solid var(--border);
-  color:var(--white); font-family:var(--raj); font-size:15px; letter-spacing:.06em;
-  padding:11px 14px; outline:none; transition:border-color .15s; margin-bottom:8px; text-align:center;
-}
-.del-pwd-input:focus { border-color:var(--red) }
-.del-err { font-family:var(--raj); font-size:12px; color:var(--red); margin-bottom:16px; display:none }
-.del-err.show { display:block }
-.del-actions { display:flex; gap:10px; justify-content:center }
-.del-cancel { padding:11px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--border); background:none; color:rgba(255,255,255,.38); cursor:pointer; transition:all .12s }
-.del-cancel:hover { border-color:var(--cyan); color:var(--cyan) }
-.del-confirm { padding:11px 22px; font-family:var(--px); font-size:8px; border:2px solid var(--red); background:var(--red); color:var(--white); cursor:pointer; transition:all .12s }
-.del-confirm:hover { background:var(--white); color:var(--red); border-color:var(--white) }
-
-/* ═══ GAME CARD DELETE BUTTON ═══ */
-.gc-delete-btn {
-  display:block; width:100%; padding:7px; margin-top:4px;
-  font-family:var(--px); font-size:7px; letter-spacing:.06em;
-  border:1px solid var(--border); background:transparent; color:var(--dim); cursor:pointer;
-  transition:all .12s;
-}
-.gc-delete-btn:hover { border-color:var(--red); color:var(--red); background:rgba(255,34,68,.04) }
-
-
+/* ═══ ANIMATIONS ═══ */
 @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 .anim   { animation:fadeUp .6s ease both }
 .anim-1 { animation-delay:.1s }
@@ -720,7 +623,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
   <div class="nav-r">
     <a href="#come-funziona">COME FUNZIONA</a>
     <a href="#giochi">GIOCHI</a>
-    <a href="#hall-of-fame" style="color:var(--yellow)">HALL OF FAME</a>
     <a href="#editor">EDITOR</a>
     <a href="#download">SCARICA</a>
     <a href="#supporta" style="color:var(--magenta)">SUPPORTA</a>
@@ -836,19 +738,8 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
     <!-- GALLERY -->
     <div id="gallery-panel" class="active">
-      <div class="gallery-search-wrap">
-        <span class="gallery-search-icon">&#9658;</span>
-        <input type="text" class="gallery-search" id="gallery-search" placeholder="Cerca gioco per titolo o autore..." oninput="onSearchInput(this.value)">
-        <button class="gallery-search-clear" id="gallery-search-clear" onclick="clearSearch()">X CANCELLA</button>
-      </div>
       <div class="gallery-bar">
         <span class="gallery-count" id="gallery-count">CARICAMENTO...</span>
-        <select class="gallery-sort" id="gallery-sort" onchange="renderGallery()">
-          <option value="score">ORDINA: VOTO</option>
-          <option value="recent">ORDINA: RECENTI</option>
-          <option value="votes">ORDINA: N. VOTI</option>
-          <option value="alpha">ORDINA: A-Z</option>
-        </select>
       </div>
       <div class="games-grid" id="games-grid">
         <div class="gallery-loading">LOADING GAMES...</div>
@@ -859,6 +750,10 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
     <div id="upload-panel">
       <div class="upload-card">
         <div class="upload-card-title">CARICA UN GIOCO NELLA JAM</div>
+        <div class="uform-group">
+          <label>PASSWORD</label>
+          <input type="password" id="up-pwd" placeholder="Password richiesta per partecipare" autocomplete="off">
+        </div>
         <div class="uform-group">
           <label>TITOLO DEL GIOCO</label>
           <input type="text" id="up-title" placeholder="es. Avventura nella Foresta">
@@ -882,10 +777,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
         </div>
         <div class="upload-progress" id="up-progress">
           <div class="upload-progress-fill" id="up-fill"></div>
-        </div>
-        <div class="uform-group">
-          <label>CODICE DI ACCESSO</label>
-          <input type="password" id="up-pwd" placeholder="Inserisci il codice ricevuto" autocomplete="off">
         </div>
         <div class="upload-disclaimer">
           <input type="checkbox" id="up-agree">
@@ -985,22 +876,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
   </div>
 </section>
 
-<!-- HALL OF FAME -->
-<div class="div-line"></div>
-<section class="section section-deep" id="hall-of-fame">
-  <div class="wrap">
-    <div class="sec-tag" style="color:var(--yellow)">CAMPIONI</div>
-    <h2 class="sec-h">HALL OF FAME.</h2>
-    <p class="sec-desc">I giochi vincitori di ogni round della JAM. I migliori titoli, eletti dalla community.</p>
-    <div id="hof-grid">
-      <div class="hof-empty">
-        <div class="hof-empty-h">NESSUN ROUND COMPLETATO</div>
-        <div class="hof-empty-s">I vincitori appariranno qui a fine round. Il primo round si conclude a Giugno 2026.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- GAME PLAYER -->
 <div id="gameWrap">
   <div id="gameBar">
@@ -1023,21 +898,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
          I giochi vengono caricati da GitHub Pages (dominio diverso), quindi
          l'assenza di allow-same-origin e' la scelta sicura corretta. -->
   <iframe id="gameFrame" sandbox="allow-scripts allow-modals allow-popups"></iframe>
-</div>
-
-<!-- DELETE MODAL -->
-<div id="del-modal">
-  <div class="del-box">
-    <h3>RIMUOVI GIOCO</h3>
-    <p>Inserisci la password per rimuovere questo gioco dalla JAM. L'operazione e' irreversibile.</p>
-    <div class="del-game-name" id="del-game-name">TITOLO GIOCO</div>
-    <input type="password" class="del-pwd-input" id="del-pwd-input" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')confirmDeleteGame()">
-    <div class="del-err" id="del-err">Password errata. Riprova.</div>
-    <div class="del-actions">
-      <button class="del-cancel" onclick="closeDelModal()">ANNULLA</button>
-      <button class="del-confirm" onclick="confirmDeleteGame()">RIMUOVI</button>
-    </div>
-  </div>
 </div>
 
 <!-- VOTE MODAL -->
@@ -1194,24 +1054,27 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
 <script>
 // ════════════════════════════════════════════════════════
-//  CONFIGURAZIONE
-//  Il token GitHub sta nelle variabili d'ambiente Netlify.
-//  La password NON e' nel sorgente: viene verificata
-//  SOLO lato server dal proxy (github-proxy.js).
-//  NON inserire mai qui token o password.
+//  CONFIGURAZIONE SICURA
+//  Il token GitHub NON e' qui — sta nelle variabili
+//  d'ambiente di Netlify (pannello Site configuration).
+//
+//  ⚠️  SICUREZZA — UPLOAD_PASSWORD:
+//  Questa password e' visibile nel sorgente pubblico.
+//  E' accettabile perche' la verifica REALE avviene
+//  lato server nel proxy (github-proxy.js), che legge
+//  UPLOAD_PASSWORD dalle variabili d'ambiente Netlify.
+//  Qui serve solo come UX guard (evita richieste inutili).
+//  NON inserire mai qui il token GitHub.
 // ════════════════════════════════════════════════════════
-const GITHUB_REPO = 'POLANGELA/gem-games-storage';
-
-// Email di contatto — costruita in JS per ridurre spam bot
-// SOSTITUISCI con la tua vera email
-const _m = ['moreflopgames', '@', 'gmail', '.com'].join('');
-
+const GITHUB_REPO     = 'POLANGELA/gem-games-storage';
+const UPLOAD_PASSWORD = 'gem2026'; // verifica reale: lato server nel proxy
 // ════════════════════════════════════════════════════════
+
 const PROXY      = '/.netlify/functions/github-proxy';
 const GAMES_JSON = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/games.json`;
 
-let allGames            = [];
-let currentGameId       = null;
+let allGames      = [];
+let currentGameId = null;
 
 // ── COUNTDOWN ──
 (function(){
@@ -1322,43 +1185,16 @@ function showPlayTab(tab, btn){
 
 // ── GITHUB HELPERS ──
 async function ghGet(path){
-  let r;
-  try{ r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',path})}); }
-  catch(netErr){ throw new Error('Errore di rete: '+netErr.message); }
-  if(!r.ok){
-    let msg='Errore server ('+r.status+')';
-    try{const e=await r.json();msg=e.error||e.message||msg;}catch{}
-    throw new Error(msg);
-  }
-  try{ return await r.json(); }
-  catch{ throw new Error('Risposta non valida dal server ('+r.status+')'); }
+  const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',path})});
+  if(!r.ok) throw new Error('gh_get_fail');
+  return r.json();
 }
 async function ghPut(path,content_b64,message,sha,pwd,type){
   const body={action:'put',path,content:content_b64,message,password:pwd||'',type:type||'upload'};
   if(sha) body.sha=sha;
-  let r;
-  try{ r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
-  catch(netErr){ throw new Error('Errore di rete: '+netErr.message); }
-  if(!r.ok){
-    let msg='Errore server ('+r.status+')';
-    try{const e=await r.json();msg=e.error||e.message||msg;}catch{}
-    throw new Error(msg);
-  }
-  try{ return await r.json(); }
-  catch{ throw new Error('Risposta non valida dal server ('+r.status+')'); }
-}
-async function ghDelete(path,sha,message,pwd){
-  const body={action:'delete',path,sha,message,password:pwd||''};
-  let r;
-  try{ r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
-  catch(netErr){ throw new Error('Errore di rete: '+netErr.message); }
-  if(!r.ok){
-    let msg='Errore server ('+r.status+')';
-    try{const e=await r.json();msg=e.error||e.message||msg;}catch{}
-    throw new Error(msg);
-  }
-  try{ return await r.json(); }
-  catch{ throw new Error('Risposta non valida dal server ('+r.status+')'); }
+  const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json();throw new Error(e.error||e.message||'gh_put_fail')}
+  return r.json();
 }
 function toB64(s){ return btoa(unescape(encodeURIComponent(s))) }
 function fromB64(s){ return decodeURIComponent(escape(atob(s.replace(/\n/g,'')))) }
@@ -1378,51 +1214,25 @@ async function loadGames(){
     if(!res.ok) throw new Error('empty');
     allGames=await res.json();
     renderGallery();
-    renderHallOfFame(allGames);
   }catch{
     allGames=[];
     grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM &mdash; scarica Level Engine e crea il tuo gioco.</div></div>';
     document.getElementById('gallery-count').textContent='0 GIOCHI IN GARA';
-    renderHallOfFame([]);
   }
 }
 
 function renderGallery(){
   const grid=document.getElementById('games-grid');
-  const searchVal=(document.getElementById('gallery-search')?.value||'').trim().toLowerCase();
-  const sortVal=document.getElementById('gallery-sort')?.value||'score';
-
-  // Filter by search
-  let filtered=allGames;
-  if(searchVal){
-    filtered=allGames.filter(g=>
-      (g.title||'').toLowerCase().includes(searchVal)||
-      (g.author||'').toLowerCase().includes(searchVal)||
-      (g.description||'').toLowerCase().includes(searchVal)
-    );
+  const count=allGames.length;
+  document.getElementById('gallery-count').textContent=count+' GIOCH'+(count===1?'O':'I')+' IN GARA';
+  if(!count){
+    grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM.</div></div>';
+    return;
   }
-
-  // Sort
-  const sorted=[...filtered].sort((a,b)=>{
-    if(sortVal==='recent') return new Date(b.uploadedAt||0)-new Date(a.uploadedAt||0);
-    if(sortVal==='votes')  return (b.votes?.length||0)-(a.votes?.length||0);
-    if(sortVal==='alpha')  return (a.title||'').localeCompare(b.title||'');
-    // default: score
+  const sorted=[...allGames].sort((a,b)=>{
     const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
     return avg(b)-avg(a);
   });
-
-  const count=filtered.length;
-  const total=allGames.length;
-  document.getElementById('gallery-count').textContent=
-    searchVal ? count+' RISULTAT'+(count===1?'O':'I')+' SU '+total : total+' GIOCH'+(total===1?'O':'I')+' IN GARA';
-
-  if(!count){
-    grid.innerHTML=searchVal
-      ? '<div class="gallery-empty"><div class="gallery-empty-h">NESSUN RISULTATO</div><div class="gallery-empty-s">Nessun gioco trovato per "'+esc(searchVal)+'".</div></div>'
-      : '<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM.</div></div>';
-    return;
-  }
   // Usa data-* attributes invece di onclick inline con dati utente → elimina XSS
   grid.innerHTML=sorted.map((g,i)=>{
     const votes=g.votes||[];
@@ -1432,6 +1242,9 @@ function renderGallery(){
     const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
     const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
     const rankLabel='#'+(i+1)+(i===0?' TOP':'');
+    // SICUREZZA: esc() su tutto il testo HTML; id/title/file passati via data-* (attributi escaped da esc())
+    // I dati sensibili per JS (id, title, url) vengono letti da data-* nel click handler,
+    // non interpolati inline nell'onclick — nessun rischio di escape dal contesto JS
     return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
       <div class="gc-rank ${rankClass}">${rankLabel}</div>
       <div class="gc-vote">
@@ -1450,7 +1263,6 @@ function renderGallery(){
       </div>
       <button class="gc-play-btn js-play-btn">GIOCA</button>
       <button class="gc-report-btn js-report-btn">SEGNALA</button>
-      <button class="gc-delete-btn js-delete-btn">RIMUOVI GIOCO</button>
     </div>`;
   }).join('');
 
@@ -1466,9 +1278,6 @@ function renderGallery(){
     } else if(e.target.classList.contains('js-report-btn')){
       e.stopPropagation();
       openReportModal(id, title);
-    } else if(e.target.classList.contains('js-delete-btn')){
-      e.stopPropagation();
-      openDelModal(id, title);
     }
   }, {once: true}); // riregistrato ad ogni renderGallery()
 }
@@ -1561,7 +1370,7 @@ async function submitVote(){
   }catch(e){ toast('ERRORE: '+e.message,'err') }
 }
 
-// ── FILE DROP ──
+// ── UPLOAD ──
 document.getElementById('up-file').addEventListener('change',function(){
   const d=document.getElementById('up-chosen');
   if(this.files[0]){d.textContent='> '+this.files[0].name;d.style.display='block';}
@@ -1571,15 +1380,14 @@ udz.addEventListener('dragover',e=>{e.preventDefault();udz.classList.add('drag')
 udz.addEventListener('dragleave',()=>udz.classList.remove('drag'));
 udz.addEventListener('drop',()=>udz.classList.remove('drag'));
 
-// ── UPLOAD ──
 async function uploadGame(){
-  const pwd   = document.getElementById('up-pwd').value.trim();
-  const title = document.getElementById('up-title').value.trim();
-  const desc  = document.getElementById('up-desc').value.trim();
-  const author= document.getElementById('up-author').value.trim();
-  const file  = document.getElementById('up-file').files[0];
-  if(!pwd)   return toast('INSERISCI IL CODICE DI ACCESSO','err');
-  if(!document.getElementById('up-agree').checked) return toast("ACCETTA I TERMINI D'USO",'err');
+  const pwd   =document.getElementById('up-pwd').value.trim();
+  const title =document.getElementById('up-title').value.trim();
+  const desc  =document.getElementById('up-desc').value.trim();
+  const author=document.getElementById('up-author').value.trim();
+  const file  =document.getElementById('up-file').files[0];
+  if(pwd!==UPLOAD_PASSWORD) return toast('PASSWORD ERRATA','err');
+  if(!document.getElementById('up-agree').checked) return toast('ACCETTA I TERMINI D\'USO','err');
   if(!title) return toast('TITOLO MANCANTE','err');
   if(!file)  return toast('SELEZIONA UN FILE','err');
   if(!file.name.match(/\.html?$/i)) return toast('SOLO FILE .HTML','err');
@@ -1590,7 +1398,7 @@ async function uploadGame(){
   btn.disabled=true; btn.textContent='CARICAMENTO...';
   bar.style.display='block'; fill.style.width='15%';
   try{
-    const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1].replace(/\r/g,''));r.onerror=rej;r.readAsDataURL(file);});
+    const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
     fill.style.width='35%';
     const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
     const gameId=Date.now()+'_'+safeFile;
@@ -1599,7 +1407,7 @@ async function uploadGame(){
     fill.style.width='65%';
     const {games,sha}=await readGamesJson();
     const rawUrl=`https://polangela.github.io/gem-games-storage/${gamePath}`;
-    games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],voters:[],uploadedAt:new Date().toISOString()});
+    games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],uploadedAt:new Date().toISOString()});
     await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,pwd);
     fill.style.width='100%';
     toast('GIOCO CARICATO!','ok');
@@ -1608,14 +1416,7 @@ async function uploadGame(){
     document.getElementById('up-chosen').style.display='none';
     allGames=games; renderGallery();
     setTimeout(()=>showPlayTab('gallery', document.querySelector('.play-tab')),1200);
-  }catch(e){
-    const msg = e.message||'';
-    if(msg.includes('403')||msg.toLowerCase().includes('password')||msg.toLowerCase().includes('errata')){
-      toast('CODICE NON VALIDO','err');
-    } else {
-      toast('ERRORE: '+msg,'err');
-    }
-  }
+  }catch(e){ toast('ERRORE: '+e.message,'err') }
   finally{
     btn.disabled=false; btn.textContent='CARICA NELLA JAM';
     setTimeout(()=>{bar.style.display='none';fill.style.width='0%'},1000);
@@ -1689,34 +1490,6 @@ function toast(msg,type){
   const t=document.getElementById('le-toast');
   t.textContent=msg; t.className='show '+type;
   clearTimeout(t._t); t._t=setTimeout(()=>t.className='',4000);
-}
-
-// ── HALL OF FAME ──
-function renderHallOfFame(games){
-  const grid=document.getElementById('hof-grid');
-  if(!grid) return;
-  // Per ora non ci sono round completati: mostra sempre il placeholder.
-  // In futuro: filtrare games con g.winner===true o g.round concluso.
-  const winners=games.filter(g=>g.winner===true);
-  if(!winners.length){
-    grid.innerHTML='<div class="hof-empty"><div class="hof-empty-h">NESSUN ROUND COMPLETATO</div><div class="hof-empty-s">I vincitori appariranno qui a fine round. Il primo round si conclude a Giugno 2026.</div></div>';
-    return;
-  }
-  grid.innerHTML=winners.map((g,i)=>{
-    const avg=g.votes&&g.votes.length?g.votes.reduce((a,b)=>a+b,0)/g.votes.length:0;
-    const pos=i+1;
-    const badgeClass=pos===1?'g1':pos===2?'g2':'g3';
-    const cardClass=pos<=3?`winner-${pos}`:'';
-    return `<div class="hof-card ${cardClass}">
-      <div class="hof-badge ${badgeClass}">#${pos}</div>
-      <div class="hof-round">ROUND ${esc(g.round||'1')}</div>
-      <div class="hof-score">${avg.toFixed(1)}</div>
-      <div class="hof-title">${esc(g.title)}</div>
-      <div class="hof-desc">${esc(g.description||'')}</div>
-      <div class="hof-meta">di ${esc(g.author||'Anonimo')} · ${g.votes?.length||0} voti</div>
-      <button class="hof-play-btn" onclick="openGame('${esc(g.id)}','${esc(g.title)}','${esc(g.file)}')">GIOCA</button>
-    </div>`;
-  }).join('');
 }
 
 // ── UTILS ──
