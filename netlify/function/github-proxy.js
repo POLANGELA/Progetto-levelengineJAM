@@ -222,6 +222,46 @@ exports.handler = async (event) => {
     } catch { return errResp(502, 'Errore comunicazione GitHub.', origin); }
   }
 
+  // ── DELETE ──────────────────────────────────────────
+  if (action === 'delete') {
+    const { path, sha, message, password } = body;
+
+    // Password obbligatoria per delete
+    if (!UPLOAD_PASSWORD || password !== UPLOAD_PASSWORD)
+      return errResp(403, 'Password errata.', origin);
+
+    // Validazione path: solo file in games/
+    if (!path || typeof path !== 'string' || !isSafePath(path))
+      return errResp(400, 'Path non valido.', origin);
+    if (!path.startsWith(ALLOWED_UPLOAD_PRE) && path !== ALLOWED_VOTE_PATH)
+      return errResp(400, 'Path non consentito per delete.', origin);
+
+    // SHA obbligatorio per delete GitHub
+    if (!sha || typeof sha !== 'string' || !/^[0-9a-f]{40}$/i.test(sha))
+      return errResp(400, 'sha non valido.', origin);
+
+    const safeMsg = sanitizeMessage(message || 'Rimosso file');
+
+    try {
+      const r = await fetch(`${API_BASE}/contents/${path}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'JAM-Proxy/1.0',
+        },
+        body: JSON.stringify({ message: safeMsg, sha }),
+      });
+      const data = await r.json();
+      return {
+        statusCode: r.status,
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      };
+    } catch { return errResp(502, 'Errore comunicazione GitHub.', origin); }
+  }
+
   // Azione non riconosciuta — non rivela le azioni valide
   return errResp(400, 'Richiesta non valida.', origin);
 };
