@@ -22,7 +22,7 @@ const API_BASE = GITHUB_REPO && REPO_RE.test(GITHUB_REPO)
 // Definisce esattamente quali path sono accessibili in lettura (GET)
 // e dove è permessa la scrittura per tipo di operazione.
 // Blocca path traversal e accesso a file non autorizzati.
-const ALLOWED_GET_PATHS   = /^(games\.json|games\/[a-zA-Z0-9._-]{1,200})$/;
+const ALLOWED_GET_PATHS   = /^(games\.json|games\/[a-zA-Z0-9._\-_]{1,200})$/;
 const ALLOWED_VOTE_PATH   = 'games.json';
 const ALLOWED_UPLOAD_PRE  = 'games/';
 const ALLOWED_REPORT_PRE  = 'reports/';
@@ -130,7 +130,9 @@ exports.handler = async (event) => {
           'User-Agent': 'JAM-Proxy/1.0',
         },
       });
-      const data = await r.json();
+      let data;
+      try { data = await r.json(); }
+      catch { return errResp(502, 'Risposta non valida da GitHub (GET).', origin); }
       return {
         statusCode: r.status,
         headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
@@ -170,7 +172,7 @@ exports.handler = async (event) => {
       return errResp(400, 'content mancante.', origin);
     if (content.length > MAX_CONTENT_B64)
       return errResp(413, 'Contenuto troppo grande (max 5 MB).', origin);
-    if (!/^[A-Za-z0-9+/\n]+=*$/.test(content))
+    if (!/^[A-Za-z0-9+/\r\n]+=*$/.test(content))
       return errResp(400, 'content non è base64 valido.', origin);
 
     // Validazione message
@@ -213,7 +215,55 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify(ghBody),
       });
-      const data = await r.json();
+      let data;
+      try { data = await r.json(); }
+      catch { return errResp(502, 'Risposta non valida da GitHub (PUT).', origin); }
+      return {
+        statusCode: r.status,
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      };
+    } catch { return errResp(502, 'Errore comunicazione GitHub.', origin); }
+  }
+
+  // ── DELETE ──────────────────────────────────────────────
+  if (action === 'delete') {
+    const { path, sha, message, password } = body;
+
+    // Solo con password valida
+    if (!UPLOAD_PASSWORD || password !== UPLOAD_PASSWORD)
+      return errResp(403, 'Password errata.', origin);
+
+    // Validazione path
+    if (!path || typeof path !== 'string' || !isSafePath(path))
+      return errResp(400, 'Path non valido.', origin);
+
+    // Solo file in games/ o games.json
+    if (path !== ALLOWED_VOTE_PATH && !path.startsWith(ALLOWED_UPLOAD_PRE))
+      return errResp(400, 'Path non consentito per eliminazione.', origin);
+
+    // SHA obbligatorio per delete GitHub
+    if (!sha || typeof sha !== 'string' || !/^[0-9a-f]{40}$/i.test(sha))
+      return errResp(400, 'SHA non valido o mancante.', origin);
+
+    if (!message || typeof message !== 'string')
+      return errResp(400, 'message mancante.', origin);
+    const safeMsg = sanitizeMessage(message);
+
+    try {
+      const r = await fetch(`${API_BASE}/contents/${path}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'JAM-Proxy/1.0',
+        },
+        body: JSON.stringify({ message: safeMsg, sha }),
+      });
+      let data;
+      try { data = await r.json(); }
+      catch { return errResp(502, 'Risposta non valida da GitHub (DELETE).', origin); }
       return {
         statusCode: r.status,
         headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
