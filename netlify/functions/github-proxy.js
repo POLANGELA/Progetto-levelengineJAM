@@ -170,9 +170,7 @@ exports.handler = async (event) => {
       return errResp(400, 'content mancante.', origin);
     if (content.length > MAX_CONTENT_B64)
       return errResp(413, 'Contenuto troppo grande (max 5 MB).', origin);
-    // Normalizza: rimuove \r\n prima di validare (il Base64 di file HTML può contenere newline)
-    const normalizedContent = content.replace(/[\r\n]/g, '');
-    if (!/^[A-Za-z0-9+/]+=*$/.test(normalizedContent))
+    if (!/^[A-Za-z0-9+/\n]+=*$/.test(content))
       return errResp(400, 'content non è base64 valido.', origin);
 
     // Validazione message
@@ -200,7 +198,7 @@ exports.handler = async (event) => {
 
     // Scrittura su GitHub
     try {
-      const ghBody = { message: safeMsg, content: normalizedContent };
+      const ghBody = { message: safeMsg, content };
       // SHA: accettato solo se è un hex valido da 40 caratteri (SHA-1 Git)
       if (sha && typeof sha === 'string' && /^[0-9a-f]{40}$/i.test(sha)) {
         ghBody.sha = sha;
