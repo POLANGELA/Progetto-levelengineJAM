@@ -883,6 +883,10 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
         <div class="upload-progress" id="up-progress">
           <div class="upload-progress-fill" id="up-fill"></div>
         </div>
+        <div class="uform-group">
+          <label>CODICE DI ACCESSO</label>
+          <input type="password" id="up-pwd" placeholder="Inserisci il codice ricevuto" autocomplete="off">
+        </div>
         <div class="upload-disclaimer">
           <input type="checkbox" id="up-agree">
           <label for="up-agree">Confermo che il gioco non contiene contenuti illegali, pornografici, violenti, discriminatori o che violano diritti di terzi. Accetto i <a onclick="closeL('terms');openL('terms')">Termini d'uso</a> e sono consapevole che contenuti non conformi verranno rimossi e potranno essere segnalati alle autorita' competenti.</label>
@@ -1548,11 +1552,13 @@ udz.addEventListener('drop',()=>udz.classList.remove('drag'));
 
 // ── UPLOAD ──
 async function uploadGame(){
-  const title =document.getElementById('up-title').value.trim();
-  const desc  =document.getElementById('up-desc').value.trim();
-  const author=document.getElementById('up-author').value.trim();
-  const file  =document.getElementById('up-file').files[0];
-  if(!document.getElementById('up-agree').checked) return toast('ACCETTA I TERMINI D\'USO','err');
+  const pwd   = document.getElementById('up-pwd').value.trim();
+  const title = document.getElementById('up-title').value.trim();
+  const desc  = document.getElementById('up-desc').value.trim();
+  const author= document.getElementById('up-author').value.trim();
+  const file  = document.getElementById('up-file').files[0];
+  if(!pwd)   return toast('INSERISCI IL CODICE DI ACCESSO','err');
+  if(!document.getElementById('up-agree').checked) return toast("ACCETTA I TERMINI D'USO",'err');
   if(!title) return toast('TITOLO MANCANTE','err');
   if(!file)  return toast('SELEZIONA UN FILE','err');
   if(!file.name.match(/\.html?$/i)) return toast('SOLO FILE .HTML','err');
@@ -1568,20 +1574,27 @@ async function uploadGame(){
     const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
     const gameId=Date.now()+'_'+safeFile;
     const gamePath=`games/${gameId}`;
-    await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,'');
+    await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,pwd);
     fill.style.width='65%';
     const {games,sha}=await readGamesJson();
     const rawUrl=`https://polangela.github.io/gem-games-storage/${gamePath}`;
     games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],voters:[],uploadedAt:new Date().toISOString()});
-    await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,'');
+    await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,pwd);
     fill.style.width='100%';
     toast('GIOCO CARICATO!','ok');
-    ['up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
+    ['up-pwd','up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('up-file').value='';
     document.getElementById('up-chosen').style.display='none';
     allGames=games; renderGallery();
     setTimeout(()=>showPlayTab('gallery', document.querySelector('.play-tab')),1200);
-  }catch(e){ toast('ERRORE: '+e.message,'err') }
+  }catch(e){
+    const msg = e.message||'';
+    if(msg.includes('403')||msg.toLowerCase().includes('password')||msg.toLowerCase().includes('errata')){
+      toast('CODICE NON VALIDO','err');
+    } else {
+      toast('ERRORE: '+msg,'err');
+    }
+  }
   finally{
     btn.disabled=false; btn.textContent='CARICA NELLA JAM';
     setTimeout(()=>{bar.style.display='none';fill.style.width='0%'},1000);
