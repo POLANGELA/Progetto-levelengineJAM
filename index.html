@@ -1691,6 +1691,34 @@ function toast(msg,type){
   clearTimeout(t._t); t._t=setTimeout(()=>t.className='',4000);
 }
 
+// ── HALL OF FAME ──
+function renderHallOfFame(games){
+  const grid=document.getElementById('hof-grid');
+  if(!grid) return;
+  // Per ora non ci sono round completati: mostra sempre il placeholder.
+  // In futuro: filtrare games con g.winner===true o g.round concluso.
+  const winners=games.filter(g=>g.winner===true);
+  if(!winners.length){
+    grid.innerHTML='<div class="hof-empty"><div class="hof-empty-h">NESSUN ROUND COMPLETATO</div><div class="hof-empty-s">I vincitori appariranno qui a fine round. Il primo round si conclude a Giugno 2026.</div></div>';
+    return;
+  }
+  grid.innerHTML=winners.map((g,i)=>{
+    const avg=g.votes&&g.votes.length?g.votes.reduce((a,b)=>a+b,0)/g.votes.length:0;
+    const pos=i+1;
+    const badgeClass=pos===1?'g1':pos===2?'g2':'g3';
+    const cardClass=pos<=3?`winner-${pos}`:'';
+    return `<div class="hof-card ${cardClass}">
+      <div class="hof-badge ${badgeClass}">#${pos}</div>
+      <div class="hof-round">ROUND ${esc(g.round||'1')}</div>
+      <div class="hof-score">${avg.toFixed(1)}</div>
+      <div class="hof-title">${esc(g.title)}</div>
+      <div class="hof-desc">${esc(g.description||'')}</div>
+      <div class="hof-meta">di ${esc(g.author||'Anonimo')} · ${g.votes?.length||0} voti</div>
+      <button class="hof-play-btn" onclick="openGame('${esc(g.id)}','${esc(g.title)}','${esc(g.file)}')">GIOCA</button>
+    </div>`;
+  }).join('');
+}
+
 // ── UTILS ──
 function esc(s=''){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
 
