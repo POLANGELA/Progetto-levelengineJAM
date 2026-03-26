@@ -1590,7 +1590,7 @@ async function uploadGame(){
   btn.disabled=true; btn.textContent='CARICAMENTO...';
   bar.style.display='block'; fill.style.width='15%';
   try{
-    const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1].replace(/\r/g,''));r.onerror=rej;r.readAsDataURL(file);});
     fill.style.width='35%';
     const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
     const gameId=Date.now()+'_'+safeFile;
