@@ -1847,7 +1847,7 @@ async function submitReport(){
   const detail=document.getElementById('report-detail').value.trim();
   const rkey='reported_'+reportGameId;
   if(localStorage.getItem(rkey)){ toast('GIA\' SEGNALATO','err'); closeReportModal(); return; }
-  closeReportModal();
+  if(!reportGameId){ toast('ERRORE: ID GIOCO MANCANTE','err'); closeReportModal(); return; }
   toast('INVIO SEGNALAZIONE...','ok');
   try{
     const reportData={
@@ -1863,9 +1863,11 @@ async function submitReport(){
     const content=toB64(JSON.stringify(reportData,null,2));
     await ghPut(reportPath,content,`SEGNALAZIONE: ${reportGameTitle} — ${reason.value}`,undefined,'','report');
     localStorage.setItem(rkey,'1');
+    closeReportModal();
     toast('SEGNALAZIONE INVIATA','ok');
   }catch(e){
     console.error('Errore salvataggio report su GitHub:',e);
+    toast('TENTATIVO FALLBACK...','ok');
     // Fallback: se la cartella reports non esiste o c'è un errore,
     // salva la segnalazione dentro games.json come campo del gioco
     try{
@@ -1877,14 +1879,17 @@ async function submitReport(){
         games[idx].reports.push({reason:reason.value,detail:detail||'',timestamp:new Date().toISOString()});
         await writeGamesJson(games,sha,`SEGNALAZIONE: ${reportGameTitle}`);
         localStorage.setItem(rkey,'1');
-        toast('SEGNALAZIONE INVIATA','ok');
+        closeReportModal();
+        toast('SEGNALAZIONE SALVATA (VIA FALLBACK)','ok');
         return;
       }
-      console.error('Gioco non trovato in games.json');
+      closeReportModal();
+      toast('GIOCO NON TROVATO','err');
     }catch(fallbackError){
       console.error('Errore anche nel fallback:',fallbackError);
+      closeReportModal();
+      toast('FALLBACK FALLITO: '+fallbackError.message,'err');
     }
-    toast('ERRORE INVIO','err');
   }
 }
 
