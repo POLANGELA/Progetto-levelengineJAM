@@ -587,6 +587,57 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 .anim-3 { animation-delay:.36s }
 .anim-4 { animation-delay:.52s }
 
+/* ═══ SEARCH BAR ═══ */
+.search-bar-wrap {
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:20px; border:2px solid var(--border);
+  background:var(--deep); padding:0 14px; transition:border-color .15s;
+}
+.search-bar-wrap:focus-within { border-color:var(--cyan) }
+.search-icon { font-family:var(--px); font-size:9px; color:var(--dim); flex-shrink:0 }
+.search-input {
+  flex:1; background:transparent; border:none; outline:none;
+  font-family:var(--raj); font-size:15px; color:var(--white);
+  padding:12px 0; letter-spacing:.04em;
+}
+.search-input::placeholder { color:rgba(255,255,255,.22) }
+.search-clear {
+  font-family:var(--px); font-size:8px; color:var(--dim);
+  background:none; border:none; cursor:pointer; padding:4px 8px;
+  transition:color .12s; display:none;
+}
+.search-clear:hover { color:var(--red) }
+.search-clear.visible { display:block }
+.search-results-info { font-family:var(--px); font-size:7px; color:var(--dim); letter-spacing:.1em; margin-bottom:14px }
+
+/* ═══ ARCHIVE SECTION ═══ */
+.archive-section { background:var(--panel) }
+.archive-round-block { margin-bottom:40px }
+.archive-round-header {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  padding:13px 18px; border:2px solid var(--border); background:rgba(255,255,255,.02);
+  margin-bottom:16px; cursor:pointer; transition:border-color .2s, background .2s;
+}
+.archive-round-header:hover { border-color:var(--yellow); background:rgba(255,230,0,.03) }
+.archive-round-header.open { border-color:var(--yellow) }
+.archive-round-id { font-family:var(--px); font-size:8px; color:var(--yellow); letter-spacing:.1em; display:flex; align-items:center; gap:10px }
+.archive-round-badge { font-family:var(--px); font-size:7px; padding:3px 9px; background:var(--yellow); color:var(--black); letter-spacing:.06em }
+.archive-round-meta { font-family:var(--orb); font-size:10px; color:var(--dim); letter-spacing:.12em; display:flex; align-items:center; gap:14px }
+.archive-round-toggle { font-family:var(--px); font-size:9px; color:var(--yellow); flex-shrink:0; transition:transform .2s }
+.archive-round-header.open .archive-round-toggle { transform:rotate(180deg) }
+.archive-round-body { display:none }
+.archive-round-body.open { display:block }
+.archive-winner-banner {
+  display:flex; align-items:center; gap:16px; padding:14px 18px;
+  background:rgba(255,230,0,.06); border:1px solid rgba(255,230,0,.25);
+  margin-bottom:18px;
+}
+.archive-winner-crown { font-family:var(--px); font-size:14px; color:var(--yellow); text-shadow:0 0 12px rgba(255,230,0,.5) }
+.archive-winner-label { font-family:var(--px); font-size:7px; color:rgba(255,230,0,.6); letter-spacing:.1em; margin-bottom:4px }
+.archive-winner-title { font-family:var(--px); font-size:10px; color:var(--yellow); letter-spacing:.04em }
+.archive-winner-score { font-family:var(--px); font-size:9px; color:var(--cyan); margin-left:auto }
+.archive-empty { padding:40px 20px; text-align:center; background:var(--deep); border:2px solid var(--border); font-family:var(--px); font-size:8px; color:var(--dim); letter-spacing:.08em }
+
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:860px){
   .tool-grid { grid-template-columns:1fr }
@@ -623,6 +674,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
   <div class="nav-r">
     <a href="#come-funziona">COME FUNZIONA</a>
     <a href="#giochi">GIOCHI</a>
+    <a href="#archivio">ARCHIVIO</a>
     <a href="#editor">EDITOR</a>
     <a href="#download">SCARICA</a>
     <a href="#supporta" style="color:var(--magenta)">SUPPORTA</a>
@@ -738,6 +790,12 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
     <!-- GALLERY -->
     <div id="gallery-panel" class="active">
+      <div class="search-bar-wrap" id="gallery-search-wrap">
+        <span class="search-icon">&#9906;</span>
+        <input class="search-input" id="gallery-search" type="text" placeholder="Cerca per titolo, autore o descrizione..." autocomplete="off" oninput="onGallerySearch(this.value)">
+        <button class="search-clear" id="gallery-search-clear" onclick="clearGallerySearch()">X</button>
+      </div>
+      <div class="search-results-info" id="gallery-search-info" style="display:none"></div>
       <div class="gallery-bar">
         <span class="gallery-count" id="gallery-count">CARICAMENTO...</span>
       </div>
@@ -750,10 +808,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
     <div id="upload-panel">
       <div class="upload-card">
         <div class="upload-card-title">CARICA UN GIOCO NELLA JAM</div>
-        <div class="uform-group">
-          <label>PASSWORD</label>
-          <input type="password" id="up-pwd" placeholder="Password richiesta per partecipare" autocomplete="off">
-        </div>
         <div class="uform-group">
           <label>TITOLO DEL GIOCO</label>
           <input type="text" id="up-title" placeholder="es. Avventura nella Foresta">
@@ -785,6 +839,29 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
         <button class="upload-submit" id="up-submit" onclick="uploadGame()">CARICA NELLA JAM</button>
         <div class="upload-notice">Il file viene salvato su GitHub. Visibile nella galleria dopo pochi secondi.<br>Buona fortuna nella JAM!</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<div class="div-line"></div>
+
+<!-- ARCHIVIO ROUND PASSATI -->
+<section class="section archive-section" id="archivio">
+  <div class="wrap">
+    <div class="sec-tag" style="color:var(--yellow)">ARCHIVIO</div>
+    <h2 class="sec-h">TUTTI I ROUND.<br>TUTTI I GIOCHI.</h2>
+    <p class="sec-desc">L'archivio completo di ogni round della JAM. Gioca ai giochi di tutti i round passati e scopri i vincitori.</p>
+
+    <!-- SEARCH ARCHIVIO -->
+    <div class="search-bar-wrap" id="archive-search-wrap">
+      <span class="search-icon">&#9906;</span>
+      <input class="search-input" id="archive-search" type="text" placeholder="Cerca in tutti i round: titolo, autore, descrizione..." autocomplete="off" oninput="onArchiveSearch(this.value)">
+      <button class="search-clear" id="archive-search-clear" onclick="clearArchiveSearch()">X</button>
+    </div>
+    <div class="search-results-info" id="archive-search-info" style="display:none"></div>
+
+    <div id="archive-container">
+      <div class="gallery-loading">CARICAMENTO ARCHIVIO...</div>
     </div>
   </div>
 </section>
@@ -1054,20 +1131,12 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
 <script>
 // ════════════════════════════════════════════════════════
-//  CONFIGURAZIONE SICURA
+//  CONFIGURAZIONE
 //  Il token GitHub NON e' qui — sta nelle variabili
 //  d'ambiente di Netlify (pannello Site configuration).
-//
-//  ⚠️  SICUREZZA — UPLOAD_PASSWORD:
-//  Questa password e' visibile nel sorgente pubblico.
-//  E' accettabile perche' la verifica REALE avviene
-//  lato server nel proxy (github-proxy.js), che legge
-//  UPLOAD_PASSWORD dalle variabili d'ambiente Netlify.
-//  Qui serve solo come UX guard (evita richieste inutili).
 //  NON inserire mai qui il token GitHub.
 // ════════════════════════════════════════════════════════
-const GITHUB_REPO     = 'POLANGELA/gem-games-storage';
-const UPLOAD_PASSWORD = 'gem2026'; // verifica reale: lato server nel proxy
+const GITHUB_REPO = 'POLANGELA/gem-games-storage';
 // ════════════════════════════════════════════════════════
 
 const PROXY      = '/.netlify/functions/github-proxy';
@@ -1214,22 +1283,56 @@ async function loadGames(){
     if(!res.ok) throw new Error('empty');
     allGames=await res.json();
     renderGallery();
+    renderArchive();
   }catch{
     allGames=[];
     grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM &mdash; scarica Level Engine e crea il tuo gioco.</div></div>';
     document.getElementById('gallery-count').textContent='0 GIOCHI IN GARA';
+    renderArchive();
   }
+}
+
+let gallerySearchQuery='';
+
+function onGallerySearch(val){
+  gallerySearchQuery=val.trim();
+  const clearBtn=document.getElementById('gallery-search-clear');
+  if(clearBtn) clearBtn.classList.toggle('visible', gallerySearchQuery.length>0);
+  renderGallery();
+}
+
+function clearGallerySearch(){
+  document.getElementById('gallery-search').value='';
+  gallerySearchQuery='';
+  document.getElementById('gallery-search-clear').classList.remove('visible');
+  renderGallery();
 }
 
 function renderGallery(){
   const grid=document.getElementById('games-grid');
-  const count=allGames.length;
+  // Only show round 1 / current round games (no round field or round===1)
+  const currentRoundGames=allGames.filter(g=>!g.round||g.round===1||g.round==='1');
+  const count=currentRoundGames.length;
   document.getElementById('gallery-count').textContent=count+' GIOCH'+(count===1?'O':'I')+' IN GARA';
-  if(!count){
-    grid.innerHTML='<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM.</div></div>';
+
+  // Apply search
+  const q=gallerySearchQuery.toLowerCase();
+  const filtered=q?currentRoundGames.filter(g=>(g.title||'').toLowerCase().includes(q)||(g.author||'').toLowerCase().includes(q)||(g.description||'').toLowerCase().includes(q)):currentRoundGames;
+
+  // Search info
+  const infoEl=document.getElementById('gallery-search-info');
+  if(infoEl){
+    if(q){ infoEl.style.display='block'; infoEl.textContent=filtered.length+' RISULTAT'+(filtered.length===1?'O':'I')+' PER "'+gallerySearchQuery.toUpperCase()+'"'; }
+    else { infoEl.style.display='none'; }
+  }
+
+  if(!filtered.length){
+    grid.innerHTML=q
+      ?'<div class="gallery-empty"><div class="gallery-empty-h">NESSUN RISULTATO</div><div class="gallery-empty-s">Nessun gioco corrisponde alla ricerca "'+esc(gallerySearchQuery)+'".</div></div>'
+      :'<div class="gallery-empty"><div class="gallery-empty-h">NESSUN GIOCO ANCORA</div><div class="gallery-empty-s">Sii il primo a partecipare alla JAM.</div></div>';
     return;
   }
-  const sorted=[...allGames].sort((a,b)=>{
+  const sorted=[...filtered].sort((a,b)=>{
     const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
     return avg(b)-avg(a);
   });
@@ -1280,6 +1383,168 @@ function renderGallery(){
       openReportModal(id, title);
     }
   }, {once: true}); // riregistrato ad ogni renderGallery()
+}
+
+// ── ARCHIVE ──
+let archiveSearchQuery='';
+
+function onArchiveSearch(val){
+  archiveSearchQuery=val.trim();
+  const clearBtn=document.getElementById('archive-search-clear');
+  if(clearBtn) clearBtn.classList.toggle('visible', archiveSearchQuery.length>0);
+  renderArchive();
+}
+
+function clearArchiveSearch(){
+  document.getElementById('archive-search').value='';
+  archiveSearchQuery='';
+  document.getElementById('archive-search-clear').classList.remove('visible');
+  renderArchive();
+}
+
+function renderArchive(){
+  const container=document.getElementById('archive-container');
+  if(!container) return;
+
+  // Raggruppa i giochi per round
+  const rounds={};
+  for(const g of allGames){
+    const r=g.round||1;
+    if(!rounds[r]) rounds[r]=[];
+    rounds[r].push(g);
+  }
+
+  const roundKeys=Object.keys(rounds).map(Number).sort((a,b)=>b-a); // decrescente
+
+  if(!roundKeys.length){
+    container.innerHTML='<div class="archive-empty">NESSUN GIOCO NELL\'ARCHIVIO ANCORA</div>';
+    return;
+  }
+
+  // Apply search
+  const q=archiveSearchQuery.toLowerCase();
+
+  // Search info
+  const infoEl=document.getElementById('archive-search-info');
+  if(q){
+    const totalFiltered=allGames.filter(g=>(g.title||'').toLowerCase().includes(q)||(g.author||'').toLowerCase().includes(q)||(g.description||'').toLowerCase().includes(q)).length;
+    if(infoEl){ infoEl.style.display='block'; infoEl.textContent=totalFiltered+' RISULTAT'+(totalFiltered===1?'O':'I')+' IN TUTTI I ROUND PER "'+archiveSearchQuery.toUpperCase()+'"'; }
+  } else {
+    if(infoEl) infoEl.style.display='none';
+  }
+
+  // Round names / dates (estendibile)
+  const ROUND_INFO={
+    1:{label:'ROUND 1',period:'MAR 2026 → GIU 2026',active:true},
+  };
+
+  container.innerHTML=roundKeys.map(rNum=>{
+    const games=rounds[rNum]||[];
+    const info=ROUND_INFO[rNum]||{label:'ROUND '+rNum,period:'',active:false};
+    const isActive=info.active;
+
+    // Filtra per ricerca
+    const filtered=q?games.filter(g=>(g.title||'').toLowerCase().includes(q)||(g.author||'').toLowerCase().includes(q)||(g.description||'').toLowerCase().includes(q)):games;
+
+    // Se ricerca attiva e nessun risultato in questo round, salta
+    if(q && !filtered.length) return '';
+
+    // Sorted by score
+    const sorted=[...filtered].sort((a,b)=>{
+      const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
+      return avg(b)-avg(a);
+    });
+
+    // Winner (primo del round intero, non solo filtrato)
+    const allSorted=[...games].sort((a,b)=>{
+      const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
+      return avg(b)-avg(a);
+    });
+    const winner=!isActive&&allSorted.length?allSorted[0]:null;
+
+    const winnerHtml=winner?`<div class="archive-winner-banner">
+      <span class="archive-winner-crown">&#9733;</span>
+      <div>
+        <div class="archive-winner-label">VINCITORE</div>
+        <div class="archive-winner-title">${esc(winner.title)}</div>
+      </div>
+      <div class="archive-winner-score">${winner.votes&&winner.votes.length?(winner.votes.reduce((a,b)=>a+b,0)/winner.votes.length).toFixed(1)+'/10':'-- '}/10</div>
+    </div>`:'';
+
+    const cardsHtml=sorted.map((g,i)=>{
+      const votes=g.votes||[];
+      const avg=votes.length?votes.reduce((a,b)=>a+b,0)/votes.length:null;
+      const score=avg!==null?avg.toFixed(1):'--';
+      const fill=avg!==null?(avg/10*100)+'%':'0%';
+      const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
+      const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
+      const rankLabel='#'+(i+1)+(i===0?' TOP':'');
+      return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
+        <div class="gc-rank ${rankClass}">${rankLabel}</div>
+        <div class="gc-vote">
+          <div class="gc-vote-row">
+            <span class="gc-score">${score}</span>
+            <span class="gc-score-max">/10</span>
+            <span class="gc-vcount">${votes.length} VOT${votes.length===1?'O':'I'}</span>
+          </div>
+          <div class="gc-bar"><div class="gc-bar-fill" style="width:${fill}"></div></div>
+        </div>
+        <div class="gc-title">${esc(g.title)}</div>
+        <div class="gc-desc">${esc(g.description||'Nessuna descrizione.')}</div>
+        <div class="gc-meta">
+          <span>${esc(g.author||'ANONIMO')}</span>
+          <span>${date}</span>
+        </div>
+        <button class="gc-play-btn js-play-btn">GIOCA</button>
+        <button class="gc-report-btn js-report-btn">SEGNALA</button>
+      </div>`;
+    }).join('');
+
+    const gridHtml=sorted.length
+      ?`<div class="games-grid archive-grid-${rNum}">${cardsHtml}</div>`
+      :`<div class="archive-empty">NESSUN RISULTATO IN QUESTO ROUND</div>`;
+
+    // Default: Round 1 aperto se attivo, chiusi i passati
+    const openClass=isActive?'open':'';
+
+    return `<div class="archive-round-block" data-round="${rNum}">
+      <div class="archive-round-header ${openClass}" onclick="toggleArchiveRound(this)">
+        <div class="archive-round-id">
+          ${isActive?'<div class="round-dot"></div>':''}
+          ${esc(info.label)}
+          ${isActive?'<span class="archive-round-badge">ATTIVO</span>':'<span class="archive-round-badge" style="background:var(--dim);color:var(--black)">CHIUSO</span>'}
+        </div>
+        <div class="archive-round-meta">
+          <span>${esc(info.period)}</span>
+          <span>${games.length} GIOCH${games.length===1?'O':'I'}</span>
+        </div>
+        <span class="archive-round-toggle">&#9650;</span>
+      </div>
+      <div class="archive-round-body ${openClass}">
+        ${winnerHtml}
+        ${gridHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Event delegation su container archivio
+  container.querySelectorAll('.archive-round-body').forEach(body=>{
+    body.addEventListener('click', function(e){
+      const card=e.target.closest('.game-card');
+      if(!card) return;
+      const id=card.dataset.id||'';
+      const title=card.dataset.title||'';
+      const file=card.dataset.file||'';
+      if(e.target.classList.contains('js-play-btn')) openGame(id,title,file);
+      else if(e.target.classList.contains('js-report-btn')){ e.stopPropagation(); openReportModal(id,title); }
+    });
+  });
+}
+
+function toggleArchiveRound(header){
+  header.classList.toggle('open');
+  const body=header.nextElementSibling;
+  if(body) body.classList.toggle('open');
 }
 
 // ── GAME PLAYER ──
@@ -1366,7 +1631,7 @@ async function submitVote(){
     await writeGamesJson(games,sha,`Voto su: ${games[idx].title}`);
     markAsVoted(currentGameId);
     toast('VOTO: '+score.toFixed(1)+'/10','ok');
-    allGames=games; renderGallery();
+    allGames=games; renderGallery(); renderArchive();
   }catch(e){ toast('ERRORE: '+e.message,'err') }
 }
 
@@ -1381,12 +1646,10 @@ udz.addEventListener('dragleave',()=>udz.classList.remove('drag'));
 udz.addEventListener('drop',()=>udz.classList.remove('drag'));
 
 async function uploadGame(){
-  const pwd   =document.getElementById('up-pwd').value.trim();
   const title =document.getElementById('up-title').value.trim();
   const desc  =document.getElementById('up-desc').value.trim();
   const author=document.getElementById('up-author').value.trim();
   const file  =document.getElementById('up-file').files[0];
-  if(pwd!==UPLOAD_PASSWORD) return toast('PASSWORD ERRATA','err');
   if(!document.getElementById('up-agree').checked) return toast('ACCETTA I TERMINI D\'USO','err');
   if(!title) return toast('TITOLO MANCANTE','err');
   if(!file)  return toast('SELEZIONA UN FILE','err');
@@ -1403,18 +1666,18 @@ async function uploadGame(){
     const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
     const gameId=Date.now()+'_'+safeFile;
     const gamePath=`games/${gameId}`;
-    await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,pwd);
+    await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,'');
     fill.style.width='65%';
     const {games,sha}=await readGamesJson();
     const rawUrl=`https://polangela.github.io/gem-games-storage/${gamePath}`;
     games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],uploadedAt:new Date().toISOString()});
-    await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,pwd);
+    await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,'');
     fill.style.width='100%';
     toast('GIOCO CARICATO!','ok');
-    ['up-pwd','up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
+    ['up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('up-file').value='';
     document.getElementById('up-chosen').style.display='none';
-    allGames=games; renderGallery();
+    allGames=games; renderGallery(); renderArchive();
     setTimeout(()=>showPlayTab('gallery', document.querySelector('.play-tab')),1200);
   }catch(e){ toast('ERRORE: '+e.message,'err') }
   finally{
