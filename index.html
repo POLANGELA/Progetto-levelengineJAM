@@ -284,6 +284,10 @@ nav::before { left:0 } nav::after { right:0 }
 .game-card {
   background:var(--deep); cursor:pointer; transition:background .15s;
   position:relative; overflow:hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .game-card:not(.has-cover) { padding:24px }
 .game-card:not(.has-cover):hover { background:var(--panel) }
@@ -352,6 +356,10 @@ nav::before { left:0 } nav::after { right:0 }
   font-family:var(--px); font-size:8px; letter-spacing:.06em; text-transform:uppercase;
   border:2px solid var(--cyan); background:transparent; color:var(--cyan); cursor:pointer;
   transition:all .12s; box-shadow:3px 3px 0 rgba(0,255,204,.15);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .gc-play-btn:hover { background:var(--cyan); color:var(--black); transform:translate(-1px,-1px); box-shadow:5px 5px 0 rgba(0,255,204,.15) }
 .game-card.has-cover .gc-play-btn { background:rgba(0,255,204,.12); }
@@ -1453,7 +1461,14 @@ function buildGameCard(g, i){
 }
 
 function attachGridEvents(container){
-  container.addEventListener('click', function handler(e){
+  // Rimuovi eventuali listener precedenti per evitare duplicati
+  const oldHandler = container._clickHandler;
+  if (oldHandler) {
+    container.removeEventListener('click', oldHandler);
+  }
+  
+  // Crea e salva il nuovo handler
+  const handler = function(e){
     const card=e.target.closest('.game-card');
     if(!card) return;
     const id=card.dataset.id||'';
@@ -1461,7 +1476,10 @@ function attachGridEvents(container){
     const file=card.dataset.file||'';
     if(e.target.classList.contains('js-play-btn')) openGame(id,title,file);
     else if(e.target.classList.contains('js-report-btn')){ e.stopPropagation(); openReportModal(id,title); }
-  },{once:true});
+  };
+  
+  container._clickHandler = handler;
+  container.addEventListener('click', handler);
 }
 
 let gallerySearchQuery='';
