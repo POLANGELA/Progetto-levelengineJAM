@@ -8,7 +8,6 @@
 
 const GITHUB_TOKEN    = process.env.GITHUB_TOKEN;
 const GITHUB_REPO     = process.env.GITHUB_REPO;
-const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
 
 // ── VALIDAZIONE CONFIGURAZIONE ──
 // Verifica che GITHUB_REPO abbia il formato atteso "utente/repo"
@@ -158,9 +157,7 @@ exports.handler = async (event) => {
       if (!path.startsWith(ALLOWED_REPORT_PRE))
         return errResp(400, 'Path non consentito per segnalazione.', origin);
     } else {
-      // Upload: password obbligatoria + path in games/ oppure games.json
-      if (!UPLOAD_PASSWORD || password !== UPLOAD_PASSWORD)
-        return errResp(403, 'Password errata.', origin);
+      // Upload: path in games/ oppure games.json
       if (path !== ALLOWED_VOTE_PATH && !path.startsWith(ALLOWED_UPLOAD_PRE))
         return errResp(400, 'Path non consentito per upload.', origin);
     }
