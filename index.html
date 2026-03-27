@@ -279,13 +279,48 @@ nav::before { left:0 } nav::after { right:0 }
   display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
   gap:2px; background:var(--border); border:2px solid var(--border);
 }
-.game-card { background:var(--deep); padding:24px; cursor:pointer; transition:background .15s; position:relative; overflow:hidden }
-.game-card:hover { background:var(--panel) }
 
-.gc-rank { position:absolute; top:0; right:0; font-family:var(--px); font-size:8px; background:var(--yellow); color:var(--black); padding:4px 8px }
-.gc-rank.top2 { background:rgba(200,200,255,.25); color:var(--white) }
-.gc-rank.top3 { background:rgba(255,120,0,.4); color:var(--white) }
+/* ── Card base ── */
+.game-card {
+  background:var(--deep); cursor:pointer; transition:background .15s;
+  position:relative; overflow:hidden;
+}
+.game-card:not(.has-cover) { padding:24px }
+.game-card:not(.has-cover):hover { background:var(--panel) }
 
+/* ── Card con cover ── */
+.game-card.has-cover { padding:0 }
+.gc-cover-img {
+  display:block; width:100%; aspect-ratio:4/3;
+  object-fit:cover; object-position:center;
+  transition:transform .3s ease;
+}
+.game-card.has-cover:hover .gc-cover-img { transform:scale(1.04) }
+.gc-cover-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,.18) 0%,
+    rgba(0,0,0,.55) 52%,
+    rgba(0,0,0,.92) 100%
+  );
+  pointer-events:none;
+}
+.gc-cover-body {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding:18px 20px 16px;
+}
+/* rank badge rimane in alto a destra su entrambe */
+.gc-rank {
+  position:absolute; top:0; right:0; z-index:2;
+  font-family:var(--px); font-size:8px;
+  background:var(--yellow); color:var(--black); padding:4px 8px;
+}
+.gc-rank.top2 { background:rgba(200,200,255,.35); color:var(--white) }
+.gc-rank.top3 { background:rgba(255,120,0,.55); color:var(--white) }
+
+/* vote block */
 .gc-vote { margin-bottom:14px }
 .gc-vote-row { display:flex; align-items:baseline; gap:6px; margin-bottom:7px }
 .gc-score { font-family:var(--px); font-size:22px; color:var(--cyan); text-shadow:0 0 10px var(--cyan); line-height:1 }
@@ -294,13 +329,24 @@ nav::before { left:0 } nav::after { right:0 }
 .gc-bar { height:3px; background:rgba(255,255,255,.07) }
 .gc-bar-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--magenta)); transition:width .5s ease }
 
+/* cover — score compatto in alto a sinistra */
+.game-card.has-cover .gc-vote { margin-bottom:6px }
+.game-card.has-cover .gc-score { font-size:18px }
+
 .gc-title { font-family:var(--px); font-size:9px; color:var(--white); letter-spacing:.04em; margin-bottom:8px; line-height:1.6 }
 .gc-desc { font-family:var(--raj); font-size:13px; color:rgba(255,255,255,.38); line-height:1.7; margin-bottom:14px; min-height:34px }
+/* cover — nascondi desc (spazio limitato) */
+.game-card.has-cover .gc-desc { display:none }
+
 .gc-meta {
   display:flex; align-items:center; justify-content:space-between;
   font-family:var(--orb); font-size:9px; color:var(--dim); letter-spacing:.06em;
   border-top:1px solid var(--border); padding-top:12px; margin-bottom:14px;
 }
+.game-card.has-cover .gc-meta {
+  border-top-color:rgba(255,255,255,.12); margin-bottom:10px; padding-top:8px;
+}
+
 .gc-play-btn {
   display:block; width:100%; padding:11px;
   font-family:var(--px); font-size:8px; letter-spacing:.06em; text-transform:uppercase;
@@ -308,11 +354,20 @@ nav::before { left:0 } nav::after { right:0 }
   transition:all .12s; box-shadow:3px 3px 0 rgba(0,255,204,.15);
 }
 .gc-play-btn:hover { background:var(--cyan); color:var(--black); transform:translate(-1px,-1px); box-shadow:5px 5px 0 rgba(0,255,204,.15) }
+.game-card.has-cover .gc-play-btn { background:rgba(0,255,204,.12); }
 
 .gallery-empty { padding:80px 20px; text-align:center; background:var(--deep); border:2px solid var(--border) }
 .gallery-empty-h { font-family:var(--px); font-size:10px; color:var(--dim); letter-spacing:.08em; margin-bottom:14px }
 .gallery-empty-s { font-family:var(--raj); font-size:14px; color:rgba(255,255,255,.28) }
 .gallery-loading { padding:80px 20px; text-align:center; font-family:var(--px); font-size:8px; color:var(--cyan); letter-spacing:.16em; animation:blinkFull 1.2s step-end infinite }
+
+/* ── Cover upload hint ── */
+.cover-hint {
+  font-family:var(--raj); font-size:12px; color:rgba(255,255,255,.3);
+  margin-top:8px; line-height:1.7; padding:10px 12px;
+  border:1px dashed rgba(255,255,255,.1); background:rgba(255,255,255,.02);
+}
+.cover-hint strong { color:var(--cyan) }
 
 /* ═══ UPLOAD ═══ */
 .upload-card { max-width:520px; margin:0 auto; border:2px solid var(--border); padding:36px; background:var(--deep) }
@@ -587,6 +642,28 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 .anim-3 { animation-delay:.36s }
 .anim-4 { animation-delay:.52s }
 
+/* ═══ MODE SWITCHER ═══ */
+.mode-switcher {
+  display:flex; gap:0; margin-bottom:36px;
+  border:2px solid var(--border); width:fit-content;
+}
+.mode-btn {
+  font-family:var(--px); font-size:8px; letter-spacing:.1em; text-transform:uppercase;
+  padding:14px 28px; cursor:pointer; background:transparent; color:var(--dim);
+  border:none; border-right:2px solid var(--border); transition:all .15s;
+  display:flex; align-items:center; gap:10px;
+}
+.mode-btn:last-child { border-right:none }
+.mode-btn:hover { color:var(--white); background:rgba(255,255,255,.03) }
+.mode-btn.active { background:var(--cyan); color:var(--black) }
+.mode-btn.active .mode-dot { background:var(--black) }
+.mode-dot {
+  width:7px; height:7px; background:var(--cyan);
+  box-shadow:0 0 6px var(--cyan); animation:blinkFull 1.2s step-end infinite;
+}
+.mode-panel { display:none }
+.mode-panel.active { display:block }
+
 /* ═══ SEARCH BAR ═══ */
 .search-bar-wrap {
   display:flex; align-items:center; gap:10px;
@@ -674,7 +751,6 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
   <div class="nav-r">
     <a href="#come-funziona">COME FUNZIONA</a>
     <a href="#giochi">GIOCHI</a>
-    <a href="#archivio">ARCHIVIO</a>
     <a href="#editor">EDITOR</a>
     <a href="#download">SCARICA</a>
     <a href="#supporta" style="color:var(--magenta)">SUPPORTA</a>
@@ -769,100 +845,122 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
 
 <div class="div-line"></div>
 
-<!-- GALLERY / PLAY -->
+<!-- GIOCHI / ARCHIVIO -->
 <section class="section section-black" id="giochi">
   <div class="wrap">
-    <div class="sec-tag" style="color:var(--yellow)">ROUND 1</div>
-    <h2 class="sec-h">GIOCHI IN GARA.</h2>
 
-    <div class="round-header">
-      <div class="round-id">
-        <div class="round-dot"></div>
-        ROUND 1 &mdash; ATTIVO
-      </div>
-      <div class="round-period">MAR 2026 &rarr; GIU 2026</div>
+    <!-- MODE SWITCHER -->
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="mode-btn-live" onclick="switchMode('live', this)">
+        <span class="mode-dot"></span>ROUND IN CORSO
+      </button>
+      <button class="mode-btn" id="mode-btn-archive" onclick="switchMode('archive', this)">
+        &#9776; ARCHIVIO JAM
+      </button>
     </div>
 
-    <div class="play-tabs">
-      <button class="play-tab active" onclick="showPlayTab('gallery', this)">GALLERIA</button>
-      <button class="play-tab" onclick="showPlayTab('upload', this)">CARICA IL TUO GIOCO</button>
-    </div>
+    <!-- ══ LIVE MODE ══ -->
+    <div id="mode-live" class="mode-panel active">
+      <div class="sec-tag" style="color:var(--yellow)">ROUND 1</div>
+      <h2 class="sec-h">GIOCHI IN GARA.</h2>
 
-    <!-- GALLERY -->
-    <div id="gallery-panel" class="active">
-      <div class="search-bar-wrap" id="gallery-search-wrap">
-        <span class="search-icon">&#9906;</span>
-        <input class="search-input" id="gallery-search" type="text" placeholder="Cerca per titolo, autore o descrizione..." autocomplete="off" oninput="onGallerySearch(this.value)">
-        <button class="search-clear" id="gallery-search-clear" onclick="clearGallerySearch()">X</button>
+      <div class="round-header">
+        <div class="round-id">
+          <div class="round-dot"></div>
+          ROUND 1 &mdash; ATTIVO
+        </div>
+        <div class="round-period">MAR 2026 &rarr; GIU 2026</div>
       </div>
-      <div class="search-results-info" id="gallery-search-info" style="display:none"></div>
-      <div class="gallery-bar">
-        <span class="gallery-count" id="gallery-count">CARICAMENTO...</span>
-      </div>
-      <div class="games-grid" id="games-grid">
-        <div class="gallery-loading">LOADING GAMES...</div>
-      </div>
-    </div>
 
-    <!-- UPLOAD -->
-    <div id="upload-panel">
-      <div class="upload-card">
-        <div class="upload-card-title">CARICA UN GIOCO NELLA JAM</div>
-        <div class="uform-group">
-          <label>TITOLO DEL GIOCO</label>
-          <input type="text" id="up-title" placeholder="es. Avventura nella Foresta">
+      <div class="play-tabs">
+        <button class="play-tab active" onclick="showPlayTab('gallery', this)">GALLERIA</button>
+        <button class="play-tab" onclick="showPlayTab('upload', this)">CARICA IL TUO GIOCO</button>
+      </div>
+
+      <!-- GALLERY -->
+      <div id="gallery-panel" class="active">
+        <div class="search-bar-wrap">
+          <span class="search-icon">&#9906;</span>
+          <input class="search-input" id="gallery-search" type="text" placeholder="Cerca per titolo, autore o descrizione..." autocomplete="off" oninput="onGallerySearch(this.value)">
+          <button class="search-clear" id="gallery-search-clear" onclick="clearGallerySearch()">X</button>
         </div>
-        <div class="uform-group">
-          <label>DESCRIZIONE</label>
-          <textarea id="up-desc" placeholder="Descrivi brevemente il gioco..."></textarea>
+        <div class="search-results-info" id="gallery-search-info" style="display:none"></div>
+        <div class="gallery-bar">
+          <span class="gallery-count" id="gallery-count">CARICAMENTO...</span>
         </div>
-        <div class="uform-group">
-          <label>IL TUO NOME (OPZIONALE)</label>
-          <input type="text" id="up-author" placeholder="es. Marco">
+        <div class="games-grid" id="games-grid">
+          <div class="gallery-loading">LOADING GAMES...</div>
         </div>
-        <div class="uform-group">
-          <label>FILE HTML DEL GIOCO</label>
-          <div class="drop-zone" id="up-drop">
-            <input type="file" id="up-file" accept=".html,.htm">
-            <div class="drop-main">CLICCA O TRASCINA IL FILE .HTML</div>
-            <div class="drop-sub">Solo file HTML &mdash; max 5 MB</div>
-            <div class="drop-chosen" id="up-chosen"></div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div id="upload-panel">
+        <div class="upload-card">
+          <div class="upload-card-title">CARICA UN GIOCO NELLA JAM</div>
+          <div class="uform-group">
+            <label>TITOLO DEL GIOCO</label>
+            <input type="text" id="up-title" placeholder="es. Avventura nella Foresta">
           </div>
+          <div class="uform-group">
+            <label>DESCRIZIONE</label>
+            <textarea id="up-desc" placeholder="Descrivi brevemente il gioco..."></textarea>
+          </div>
+          <div class="uform-group">
+            <label>IL TUO NOME (OPZIONALE)</label>
+            <input type="text" id="up-author" placeholder="es. Marco">
+          </div>
+          <div class="uform-group">
+            <label>FILE HTML DEL GIOCO</label>
+            <div class="drop-zone" id="up-drop">
+              <input type="file" id="up-file" accept=".html,.htm">
+              <div class="drop-main">CLICCA O TRASCINA IL FILE .HTML</div>
+              <div class="drop-sub">Solo file HTML &mdash; max 5 MB</div>
+              <div class="drop-chosen" id="up-chosen"></div>
+            </div>
+          </div>
+          <div class="uform-group">
+            <label>IMMAGINE DI COPERTINA <span style="color:var(--dim);font-family:var(--raj);font-size:11px;text-transform:none;letter-spacing:0">(opzionale)</span></label>
+            <div class="drop-zone" id="up-cover-drop" style="padding:24px 20px">
+              <input type="file" id="up-cover" accept=".jpg,.jpeg,.png,.gif,.webp">
+              <div class="drop-main">CLICCA O TRASCINA L'IMMAGINE</div>
+              <div class="drop-chosen" id="up-cover-chosen"></div>
+            </div>
+            <div class="cover-hint">
+              Dimensione consigliata: <strong>460 × 345 px</strong> (rapporto 4:3) &mdash; Formati: JPG, PNG, GIF, WEBP &mdash; Max <strong>500 KB</strong><br>
+              L'immagine diventa lo sfondo della tua card nella galleria. Le GIF animate sono supportate.
+            </div>
+          </div>
+          <div class="upload-progress" id="up-progress">
+            <div class="upload-progress-fill" id="up-fill"></div>
+          </div>
+          <div class="upload-disclaimer">
+            <input type="checkbox" id="up-agree">
+            <label for="up-agree">Confermo che il gioco non contiene contenuti illegali, pornografici, violenti, discriminatori o che violano diritti di terzi. Accetto i <a onclick="closeL('terms');openL('terms')">Termini d'uso</a> e sono consapevole che contenuti non conformi verranno rimossi e potranno essere segnalati alle autorita' competenti.</label>
+          </div>
+          <button class="upload-submit" id="up-submit" onclick="uploadGame()">CARICA NELLA JAM</button>
+          <div class="upload-notice">Il file viene salvato su GitHub. Visibile nella galleria dopo pochi secondi.<br>Buona fortuna nella JAM!</div>
         </div>
-        <div class="upload-progress" id="up-progress">
-          <div class="upload-progress-fill" id="up-fill"></div>
-        </div>
-        <div class="upload-disclaimer">
-          <input type="checkbox" id="up-agree">
-          <label for="up-agree">Confermo che il gioco non contiene contenuti illegali, pornografici, violenti, discriminatori o che violano diritti di terzi. Accetto i <a onclick="closeL('terms');openL('terms')">Termini d'uso</a> e sono consapevole che contenuti non conformi verranno rimossi e potranno essere segnalati alle autorita' competenti.</label>
-        </div>
-        <button class="upload-submit" id="up-submit" onclick="uploadGame()">CARICA NELLA JAM</button>
-        <div class="upload-notice">Il file viene salvato su GitHub. Visibile nella galleria dopo pochi secondi.<br>Buona fortuna nella JAM!</div>
       </div>
     </div>
-  </div>
-</section>
 
-<div class="div-line"></div>
+    <!-- ══ ARCHIVE MODE ══ -->
+    <div id="mode-archive" class="mode-panel">
+      <div class="sec-tag" style="color:var(--dim)">ARCHIVIO</div>
+      <h2 class="sec-h">TUTTI I ROUND.<br>TUTTI I GIOCHI.</h2>
+      <p class="sec-desc" style="margin-bottom:28px">L'archivio completo della JAM. Esplora ogni round, scopri i vincitori e gioca ai giochi del passato.</p>
 
-<!-- ARCHIVIO ROUND PASSATI -->
-<section class="section archive-section" id="archivio">
-  <div class="wrap">
-    <div class="sec-tag" style="color:var(--yellow)">ARCHIVIO</div>
-    <h2 class="sec-h">TUTTI I ROUND.<br>TUTTI I GIOCHI.</h2>
-    <p class="sec-desc">L'archivio completo di ogni round della JAM. Gioca ai giochi di tutti i round passati e scopri i vincitori.</p>
+      <div class="search-bar-wrap">
+        <span class="search-icon">&#9906;</span>
+        <input class="search-input" id="archive-search" type="text" placeholder="Cerca in tutti i round: titolo, autore, descrizione..." autocomplete="off" oninput="onArchiveSearch(this.value)">
+        <button class="search-clear" id="archive-search-clear" onclick="clearArchiveSearch()">X</button>
+      </div>
+      <div class="search-results-info" id="archive-search-info" style="display:none"></div>
 
-    <!-- SEARCH ARCHIVIO -->
-    <div class="search-bar-wrap" id="archive-search-wrap">
-      <span class="search-icon">&#9906;</span>
-      <input class="search-input" id="archive-search" type="text" placeholder="Cerca in tutti i round: titolo, autore, descrizione..." autocomplete="off" oninput="onArchiveSearch(this.value)">
-      <button class="search-clear" id="archive-search-clear" onclick="clearArchiveSearch()">X</button>
+      <div id="archive-container">
+        <div class="gallery-loading">CARICAMENTO ARCHIVIO...</div>
+      </div>
     </div>
-    <div class="search-results-info" id="archive-search-info" style="display:none"></div>
 
-    <div id="archive-container">
-      <div class="gallery-loading">CARICAMENTO ARCHIVIO...</div>
-    </div>
   </div>
 </section>
 
@@ -1245,6 +1343,13 @@ function openL(x){ document.getElementById('l'+x).classList.add('open'); documen
 function closeL(x){ document.getElementById('l'+x).classList.remove('open'); document.body.style.overflow='' }
 
 // ── TABS ──
+function switchMode(mode, btn){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mode-'+mode).classList.add('active');
+}
+
 function showPlayTab(tab, btn){
   document.querySelectorAll('.play-tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('#gallery-panel,#upload-panel').forEach(p=>p.classList.remove('active'));
@@ -1292,6 +1397,73 @@ async function loadGames(){
   }
 }
 
+// ── SHARED CARD BUILDER ──
+function buildGameCard(g, i){
+  const votes=g.votes||[];
+  const avg=votes.length?votes.reduce((a,b)=>a+b,0)/votes.length:null;
+  const score=avg!==null?avg.toFixed(1):'--';
+  const fill=avg!==null?(avg/10*100)+'%':'0%';
+  const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
+  const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
+  const rankLabel='#'+(i+1)+(i===0?' TOP':'');
+  const hasCover=!!g.cover;
+
+  const voteBlock=`
+    <div class="gc-vote">
+      <div class="gc-vote-row">
+        <span class="gc-score">${score}</span>
+        <span class="gc-score-max">/10</span>
+        <span class="gc-vcount">${votes.length} VOT${votes.length===1?'O':'I'}</span>
+      </div>
+      <div class="gc-bar"><div class="gc-bar-fill" style="width:${fill}"></div></div>
+    </div>`;
+
+  const metaBlock=`
+    <div class="gc-meta">
+      <span>${esc(g.author||'ANONIMO')}</span>
+      <span>${date}</span>
+    </div>`;
+
+  const btns=`
+    <button class="gc-play-btn js-play-btn">GIOCA</button>
+    <button class="gc-report-btn js-report-btn">SEGNALA</button>`;
+
+  if(hasCover){
+    return `<div class="game-card has-cover" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
+      <img class="gc-cover-img" src="${esc(g.cover)}" alt="${esc(g.title)}" loading="lazy">
+      <div class="gc-cover-overlay"></div>
+      <div class="gc-rank ${rankClass}">${rankLabel}</div>
+      <div class="gc-cover-body">
+        ${voteBlock}
+        <div class="gc-title">${esc(g.title)}</div>
+        ${metaBlock}
+        ${btns}
+      </div>
+    </div>`;
+  }
+
+  return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
+    <div class="gc-rank ${rankClass}">${rankLabel}</div>
+    ${voteBlock}
+    <div class="gc-title">${esc(g.title)}</div>
+    <div class="gc-desc">${esc(g.description||'Nessuna descrizione.')}</div>
+    ${metaBlock}
+    ${btns}
+  </div>`;
+}
+
+function attachGridEvents(container){
+  container.addEventListener('click', function handler(e){
+    const card=e.target.closest('.game-card');
+    if(!card) return;
+    const id=card.dataset.id||'';
+    const title=card.dataset.title||'';
+    const file=card.dataset.file||'';
+    if(e.target.classList.contains('js-play-btn')) openGame(id,title,file);
+    else if(e.target.classList.contains('js-report-btn')){ e.stopPropagation(); openReportModal(id,title); }
+  },{once:true});
+}
+
 let gallerySearchQuery='';
 
 function onGallerySearch(val){
@@ -1310,16 +1482,13 @@ function clearGallerySearch(){
 
 function renderGallery(){
   const grid=document.getElementById('games-grid');
-  // Only show round 1 / current round games (no round field or round===1)
   const currentRoundGames=allGames.filter(g=>!g.round||g.round===1||g.round==='1');
   const count=currentRoundGames.length;
   document.getElementById('gallery-count').textContent=count+' GIOCH'+(count===1?'O':'I')+' IN GARA';
 
-  // Apply search
   const q=gallerySearchQuery.toLowerCase();
   const filtered=q?currentRoundGames.filter(g=>(g.title||'').toLowerCase().includes(q)||(g.author||'').toLowerCase().includes(q)||(g.description||'').toLowerCase().includes(q)):currentRoundGames;
 
-  // Search info
   const infoEl=document.getElementById('gallery-search-info');
   if(infoEl){
     if(q){ infoEl.style.display='block'; infoEl.textContent=filtered.length+' RISULTAT'+(filtered.length===1?'O':'I')+' PER "'+gallerySearchQuery.toUpperCase()+'"'; }
@@ -1336,53 +1505,8 @@ function renderGallery(){
     const avg=g=>g.votes&&g.votes.length?g.votes.reduce((x,y)=>x+y,0)/g.votes.length:0;
     return avg(b)-avg(a);
   });
-  // Usa data-* attributes invece di onclick inline con dati utente → elimina XSS
-  grid.innerHTML=sorted.map((g,i)=>{
-    const votes=g.votes||[];
-    const avg=votes.length?votes.reduce((a,b)=>a+b,0)/votes.length:null;
-    const score=avg!==null?avg.toFixed(1):'--';
-    const fill=avg!==null?(avg/10*100)+'%':'0%';
-    const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
-    const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
-    const rankLabel='#'+(i+1)+(i===0?' TOP':'');
-    // SICUREZZA: esc() su tutto il testo HTML; id/title/file passati via data-* (attributi escaped da esc())
-    // I dati sensibili per JS (id, title, url) vengono letti da data-* nel click handler,
-    // non interpolati inline nell'onclick — nessun rischio di escape dal contesto JS
-    return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
-      <div class="gc-rank ${rankClass}">${rankLabel}</div>
-      <div class="gc-vote">
-        <div class="gc-vote-row">
-          <span class="gc-score">${score}</span>
-          <span class="gc-score-max">/10</span>
-          <span class="gc-vcount">${votes.length} VOT${votes.length===1?'O':'I'}</span>
-        </div>
-        <div class="gc-bar"><div class="gc-bar-fill" style="width:${fill}"></div></div>
-      </div>
-      <div class="gc-title">${esc(g.title)}</div>
-      <div class="gc-desc">${esc(g.description||'Nessuna descrizione.')}</div>
-      <div class="gc-meta">
-        <span>${esc(g.author||'ANONIMO')}</span>
-        <span>${date}</span>
-      </div>
-      <button class="gc-play-btn js-play-btn">GIOCA</button>
-      <button class="gc-report-btn js-report-btn">SEGNALA</button>
-    </div>`;
-  }).join('');
-
-  // Event delegation: un solo listener sul container, sicuro per qualsiasi dato
-  grid.addEventListener('click', function handler(e){
-    const card = e.target.closest('.game-card');
-    if(!card) return;
-    const id    = card.dataset.id    || '';
-    const title = card.dataset.title || '';
-    const file  = card.dataset.file  || '';
-    if(e.target.classList.contains('js-play-btn')){
-      openGame(id, title, file);
-    } else if(e.target.classList.contains('js-report-btn')){
-      e.stopPropagation();
-      openReportModal(id, title);
-    }
-  }, {once: true}); // riregistrato ad ogni renderGallery()
+  grid.innerHTML=sorted.map((g,i)=>buildGameCard(g,i)).join('');
+  attachGridEvents(grid);
 }
 
 // ── ARCHIVE ──
@@ -1471,37 +1595,10 @@ function renderArchive(){
       <div class="archive-winner-score">${winner.votes&&winner.votes.length?(winner.votes.reduce((a,b)=>a+b,0)/winner.votes.length).toFixed(1)+'/10':'-- '}/10</div>
     </div>`:'';
 
-    const cardsHtml=sorted.map((g,i)=>{
-      const votes=g.votes||[];
-      const avg=votes.length?votes.reduce((a,b)=>a+b,0)/votes.length:null;
-      const score=avg!==null?avg.toFixed(1):'--';
-      const fill=avg!==null?(avg/10*100)+'%':'0%';
-      const date=g.uploadedAt?new Date(g.uploadedAt).toLocaleDateString('it-IT'):'';
-      const rankClass=i===0?'top1':i===1?'top2':i===2?'top3':'';
-      const rankLabel='#'+(i+1)+(i===0?' TOP':'');
-      return `<div class="game-card" data-id="${esc(g.id)}" data-title="${esc(g.title)}" data-file="${esc(g.file||'')}">
-        <div class="gc-rank ${rankClass}">${rankLabel}</div>
-        <div class="gc-vote">
-          <div class="gc-vote-row">
-            <span class="gc-score">${score}</span>
-            <span class="gc-score-max">/10</span>
-            <span class="gc-vcount">${votes.length} VOT${votes.length===1?'O':'I'}</span>
-          </div>
-          <div class="gc-bar"><div class="gc-bar-fill" style="width:${fill}"></div></div>
-        </div>
-        <div class="gc-title">${esc(g.title)}</div>
-        <div class="gc-desc">${esc(g.description||'Nessuna descrizione.')}</div>
-        <div class="gc-meta">
-          <span>${esc(g.author||'ANONIMO')}</span>
-          <span>${date}</span>
-        </div>
-        <button class="gc-play-btn js-play-btn">GIOCA</button>
-        <button class="gc-report-btn js-report-btn">SEGNALA</button>
-      </div>`;
-    }).join('');
+    const cardsHtml=sorted.map((g,i)=>buildGameCard(g,i)).join('');
 
     const gridHtml=sorted.length
-      ?`<div class="games-grid archive-grid-${rNum}">${cardsHtml}</div>`
+      ?`<div class="games-grid archive-grid-r${rNum}">${cardsHtml}</div>`
       :`<div class="archive-empty">NESSUN RISULTATO IN QUESTO ROUND</div>`;
 
     // Default: Round 1 aperto se attivo, chiusi i passati
@@ -1527,18 +1624,8 @@ function renderArchive(){
     </div>`;
   }).join('');
 
-  // Event delegation su container archivio
-  container.querySelectorAll('.archive-round-body').forEach(body=>{
-    body.addEventListener('click', function(e){
-      const card=e.target.closest('.game-card');
-      if(!card) return;
-      const id=card.dataset.id||'';
-      const title=card.dataset.title||'';
-      const file=card.dataset.file||'';
-      if(e.target.classList.contains('js-play-btn')) openGame(id,title,file);
-      else if(e.target.classList.contains('js-report-btn')){ e.stopPropagation(); openReportModal(id,title); }
-    });
-  });
+  // Event delegation su grids archivio
+  container.querySelectorAll('.games-grid').forEach(g=>attachGridEvents(g));
 }
 
 function toggleArchiveRound(header){
@@ -1640,43 +1727,73 @@ document.getElementById('up-file').addEventListener('change',function(){
   const d=document.getElementById('up-chosen');
   if(this.files[0]){d.textContent='> '+this.files[0].name;d.style.display='block';}
 });
+document.getElementById('up-cover').addEventListener('change',function(){
+  const d=document.getElementById('up-cover-chosen');
+  if(this.files[0]){d.textContent='> '+this.files[0].name;d.style.display='block';}
+});
 const udz=document.getElementById('up-drop');
 udz.addEventListener('dragover',e=>{e.preventDefault();udz.classList.add('drag')});
 udz.addEventListener('dragleave',()=>udz.classList.remove('drag'));
 udz.addEventListener('drop',()=>udz.classList.remove('drag'));
+const cdz=document.getElementById('up-cover-drop');
+cdz.addEventListener('dragover',e=>{e.preventDefault();cdz.classList.add('drag')});
+cdz.addEventListener('dragleave',()=>cdz.classList.remove('drag'));
+cdz.addEventListener('drop',()=>cdz.classList.remove('drag'));
 
 async function uploadGame(){
   const title =document.getElementById('up-title').value.trim();
   const desc  =document.getElementById('up-desc').value.trim();
   const author=document.getElementById('up-author').value.trim();
   const file  =document.getElementById('up-file').files[0];
+  const cover =document.getElementById('up-cover').files[0];
   if(!document.getElementById('up-agree').checked) return toast('ACCETTA I TERMINI D\'USO','err');
   if(!title) return toast('TITOLO MANCANTE','err');
   if(!file)  return toast('SELEZIONA UN FILE','err');
   if(!file.name.match(/\.html?$/i)) return toast('SOLO FILE .HTML','err');
   if(file.size>5*1024*1024) return toast('MAX 5MB','err');
+  if(cover){
+    if(!cover.type.startsWith('image/')) return toast('COPERTINA: SOLO IMMAGINI','err');
+    if(cover.size>500*1024) return toast('COPERTINA MAX 500KB','err');
+  }
   const btn=document.getElementById('up-submit');
   const bar=document.getElementById('up-progress');
   const fill=document.getElementById('up-fill');
   btn.disabled=true; btn.textContent='CARICAMENTO...';
-  bar.style.display='block'; fill.style.width='15%';
+  bar.style.display='block'; fill.style.width='10%';
   try{
     const fileB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-    fill.style.width='35%';
+    fill.style.width='25%';
     const safeFile=file.name.replace(/[^a-z0-9.\-_]/gi,'_').toLowerCase();
     const gameId=Date.now()+'_'+safeFile;
     const gamePath=`games/${gameId}`;
     await ghPut(gamePath,fileB64,`Aggiunto: ${title}`,undefined,'');
-    fill.style.width='65%';
+    fill.style.width='55%';
+
+    // Upload copertina se presente
+    let coverUrl='';
+    if(cover){
+      const coverB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(cover);});
+      const ext=cover.name.split('.').pop().toLowerCase()||'jpg';
+      const safeCover=`${gameId}_cover.${ext}`;
+      const coverPath=`covers/${safeCover}`;
+      await ghPut(coverPath,coverB64,`Cover: ${title}`,undefined,'');
+      coverUrl=`https://polangela.github.io/gem-games-storage/${coverPath}`;
+    }
+    fill.style.width='75%';
+
     const {games,sha}=await readGamesJson();
     const rawUrl=`https://polangela.github.io/gem-games-storage/${gamePath}`;
-    games.unshift({id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],uploadedAt:new Date().toISOString()});
+    const entry={id:gameId,title,description:desc,author:author||'Anonimo',file:rawUrl,votes:[],uploadedAt:new Date().toISOString()};
+    if(coverUrl) entry.cover=coverUrl;
+    games.unshift(entry);
     await writeGamesJson(games,sha,`Lista: aggiunto ${title}`,'');
     fill.style.width='100%';
     toast('GIOCO CARICATO!','ok');
     ['up-title','up-desc','up-author'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('up-file').value='';
+    document.getElementById('up-cover').value='';
     document.getElementById('up-chosen').style.display='none';
+    document.getElementById('up-cover-chosen').style.display='none';
     allGames=games; renderGallery(); renderArchive();
     setTimeout(()=>showPlayTab('gallery', document.querySelector('.play-tab')),1200);
   }catch(e){ toast('ERRORE: '+e.message,'err') }
