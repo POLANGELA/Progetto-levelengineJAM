@@ -1865,9 +1865,11 @@ async function submitReport(){
     localStorage.setItem(rkey,'1');
     toast('SEGNALAZIONE INVIATA','ok');
   }catch(e){
+    console.error('Errore salvataggio report su GitHub:',e);
     // Fallback: se la cartella reports non esiste o c'è un errore,
     // salva la segnalazione dentro games.json come campo del gioco
     try{
+      console.log('Tentativo fallback: salvataggio in games.json...');
       const {games,sha}=await readGamesJson();
       const idx=games.findIndex(g=>g.id===reportGameId);
       if(idx!==-1){
@@ -1878,7 +1880,10 @@ async function submitReport(){
         toast('SEGNALAZIONE INVIATA','ok');
         return;
       }
-    }catch{}
+      console.error('Gioco non trovato in games.json');
+    }catch(fallbackError){
+      console.error('Errore anche nel fallback:',fallbackError);
+    }
     toast('ERRORE INVIO','err');
   }
 }
