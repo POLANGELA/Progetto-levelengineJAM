@@ -21,9 +21,10 @@ const API_BASE = GITHUB_REPO && REPO_RE.test(GITHUB_REPO)
 // Definisce esattamente quali path sono accessibili in lettura (GET)
 // e dove è permessa la scrittura per tipo di operazione.
 // Blocca path traversal e accesso a file non autorizzati.
-const ALLOWED_GET_PATHS   = /^(games\.json|games\/[a-zA-Z0-9._-]{1,200})$/;
+const ALLOWED_GET_PATHS   = /^(games\.json|games\/[a-zA-Z0-9._-]{1,200}|covers\/[a-zA-Z0-9._-]{1,200})$/;
 const ALLOWED_VOTE_PATH   = 'games.json';
 const ALLOWED_UPLOAD_PRE  = 'games/';
+const ALLOWED_COVER_PRE   = 'covers/';
 const ALLOWED_REPORT_PRE  = 'reports/';
 const SAFE_PATH_RE        = /^[a-zA-Z0-9._/-]{1,300}$/;
 
@@ -157,8 +158,8 @@ exports.handler = async (event) => {
       if (!path.startsWith(ALLOWED_REPORT_PRE))
         return errResp(400, 'Path non consentito per segnalazione.', origin);
     } else {
-      // Upload: path in games/ oppure games.json
-      if (path !== ALLOWED_VOTE_PATH && !path.startsWith(ALLOWED_UPLOAD_PRE))
+      // Upload: path in games/, covers/ oppure games.json
+      if (path !== ALLOWED_VOTE_PATH && !path.startsWith(ALLOWED_UPLOAD_PRE) && !path.startsWith(ALLOWED_COVER_PRE))
         return errResp(400, 'Path non consentito per upload.', origin);
     }
 
