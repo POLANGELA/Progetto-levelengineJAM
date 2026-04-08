@@ -1214,7 +1214,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
         <div class="dl-ver">VERSIONE 8.0 &mdash; MIT OPEN SOURCE</div>
         <p class="dl-desc">L'editor ufficiale della JAM. Editor visuale, play mode, sprite system, minigame engine e tutte le feature in un singolo file .html</p>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <a href="EditorTestuale_v2.html" download="LevelEngine_v8.html" class="btn btn-sec">SCARICA GRATIS</a>
+          <a href="editortestuale_v2.html" download="LevelEngine_v8.html" class="btn btn-sec">SCARICA GRATIS</a>
           <button class="btn btn-prim" onclick="openEditorOverlay()" style="border:2px solid var(--magenta);background:var(--magenta);color:var(--black)">APRI EDITOR ONLINE</button>
         </div>
         <div class="dl-tags">
@@ -1239,7 +1239,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
     <button id="editorCloseBtn" onclick="closeEditorOverlay()">✕ TORNA AL SITO</button>
   </div>
   <iframe id="editorFrame"
-    src="EditorTestuale_v2.html"
+    src="editortestuale_v2.html"
     sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads"
     allow="fullscreen"
     loading="lazy"
@@ -2087,7 +2087,7 @@ function openEditorOverlay(){
   const fr = document.getElementById('editorFrame');
   // Carica l'iframe solo la prima volta
   if(!fr.src || fr.src === 'about:blank'){
-    fr.src = 'EditorTestuale_v2.html';
+    fr.src = 'editortestuale_v2.html';
   }
   ov.classList.add('on');
   document.body.style.overflow = 'hidden';
