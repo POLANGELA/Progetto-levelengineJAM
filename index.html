@@ -462,6 +462,31 @@ nav::before { left:0 } nav::after { right:0 }
 #le-toast.ok  { background:var(--cyan); color:var(--black); border-color:var(--cyan) }
 #le-toast.err { background:var(--red);  color:var(--white); border-color:var(--red) }
 
+
+/* ═══ EDITOR OVERLAY ═══ */
+#editorOverlay {
+  display:none; position:fixed; inset:0; z-index:800;
+  background:#000; flex-direction:column;
+}
+#editorOverlay.on { display:flex }
+#editorTopBar {
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:0 14px; height:44px;
+  background:var(--black); border-bottom:2px solid var(--magenta);
+}
+#editorTopBar .ebar-l { display:flex; align-items:center; gap:10px }
+#editorTopBar .ebar-title { font-family:var(--px); font-size:8px; color:var(--magenta); letter-spacing:.06em; text-shadow:0 0 10px var(--magenta) }
+#editorTopBar .ebar-save { font-family:var(--px); font-size:7px; color:var(--cyan); letter-spacing:.12em; opacity:.6; animation:blinkFull 2s step-end infinite }
+#editorCloseBtn {
+  font-family:var(--px); font-size:7px; letter-spacing:.08em;
+  padding:7px 16px; border:2px solid var(--red); background:none;
+  color:var(--red); cursor:pointer; transition:all .12s;
+}
+#editorCloseBtn:hover { background:rgba(255,34,68,.1) }
+#editorFrame {
+  flex:1; border:none; width:100%; height:100%; background:#000;
+}
+
 /* ═══ VOTE MODAL ═══ */
 #vote-modal { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.93); align-items:center; justify-content:center; padding:20px }
 #vote-modal.open { display:flex }
@@ -931,6 +956,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
       <a href="#giochi" class="btn btn-prim">GIOCA ORA</a>
       <a href="#come-funziona" class="btn btn-sec">COME FUNZIONA</a>
       <a href="#download" class="btn btn-ghost">SCARICA L'EDITOR</a>
+      <button class="btn btn-ghost" onclick="openEditorOverlay()" style="border-color:var(--magenta);color:var(--magenta)">EDITOR ONLINE</button>
     </div>
 
     <div class="countdown-wrap anim anim-4">
@@ -1187,7 +1213,10 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
         <div class="dl-title">LEVEL ENGINE v8</div>
         <div class="dl-ver">VERSIONE 8.0 &mdash; MIT OPEN SOURCE</div>
         <p class="dl-desc">L'editor ufficiale della JAM. Editor visuale, play mode, sprite system, minigame engine e tutte le feature in un singolo file .html</p>
-        <a href="EditorTestuale_v2.html" download="LevelEngine_v8.html" class="btn btn-sec" style="margin:0 auto">SCARICA GRATIS</a>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="EditorTestuale_v2.html" download="LevelEngine_v8.html" class="btn btn-sec">SCARICA GRATIS</a>
+          <button class="btn btn-prim" onclick="openEditorOverlay()" style="border:2px solid var(--magenta);background:var(--magenta);color:var(--black)">APRI EDITOR ONLINE</button>
+        </div>
         <div class="dl-tags">
           <span class="dl-tag">UN FILE .HTML</span>
           <span class="dl-tag">MIT OPEN SOURCE</span>
@@ -1198,6 +1227,24 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
     </div>
   </div>
 </section>
+
+
+<!-- EDITOR OVERLAY -->
+<div id="editorOverlay">
+  <div id="editorTopBar">
+    <div class="ebar-l">
+      <span class="ebar-title">LEVEL ENGINE v8 — EDITOR</span>
+      <span class="ebar-save" id="edSaveStatus">● SALVATAGGIO AUTOMATICO ATTIVO</span>
+    </div>
+    <button id="editorCloseBtn" onclick="closeEditorOverlay()">✕ TORNA AL SITO</button>
+  </div>
+  <iframe id="editorFrame"
+    src="EditorTestuale_v2.html"
+    sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads"
+    allow="fullscreen"
+    loading="lazy"
+  ></iframe>
+</div>
 
 <!-- GAME PLAYER -->
 <div id="gameWrap">
@@ -2032,6 +2079,49 @@ async function submitReport(){
     }
   }
 }
+
+
+// ── EDITOR OVERLAY ──
+function openEditorOverlay(){
+  const ov = document.getElementById('editorOverlay');
+  const fr = document.getElementById('editorFrame');
+  // Carica l'iframe solo la prima volta
+  if(!fr.src || fr.src === 'about:blank'){
+    fr.src = 'EditorTestuale_v2.html';
+  }
+  ov.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  // Tenta fullscreen
+  try{
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if(req) req.call(el).catch(()=>{});
+  }catch(e){}
+  // Mostra indicatore salvataggio
+  const st = document.getElementById('edSaveStatus');
+  if(st){
+    st.textContent = '● SALVATAGGIO AUTOMATICO ATTIVO';
+    st.style.color = 'var(--cyan)';
+  }
+}
+function closeEditorOverlay(){
+  const ov = document.getElementById('editorOverlay');
+  ov.classList.remove('on');
+  document.body.style.overflow = '';
+  // Esci da fullscreen se attivo
+  try{
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+    if(exitFs && document.fullscreenElement) exitFs.call(document).catch(()=>{});
+  }catch(e){}
+  toast('PROGETTO SALVATO NEL BROWSER', 'ok');
+}
+// Chiudi con ESC
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    const ov = document.getElementById('editorOverlay');
+    if(ov && ov.classList.contains('on')) closeEditorOverlay();
+  }
+});
 
 // ── TOAST ──
 function toast(msg,type){
