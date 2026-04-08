@@ -10,25 +10,20 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Impedisce il clickjacking (embedding in iframe esterni)
     X-Frame-Options = "SAMEORIGIN"
-    # Impedisce MIME sniffing
     X-Content-Type-Options = "nosniff"
-    # Limita le informazioni di referrer inviate a terzi
     Referrer-Policy = "strict-origin-when-cross-origin"
-    # Disabilita API non necessarie
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
-    # HSTS: forza HTTPS per 1 anno, inclusi sottodomini
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    # Impedisce XSS tramite IE/Edge legacy
     X-XSS-Protection = "1; mode=block"
-    # Content Security Policy:
-    # NOTA: 'unsafe-inline' per script è necessario perché tutto il JS è inline nell'HTML.
-    # Per rimuoverlo in futuro, spostare il JS in file esterni con hash/nonce CSP.
-    # Google Fonts in style-src e font-src: font caricati con base "interesse legittimo".
-    # AdSense in script-src + frame-src: caricato solo dopo consenso utente via JS.
-    # frame-src include tutti i domini da cui AdSense inietta iframe pubblicitari.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://polangela.github.io https://raw.githubusercontent.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://www.google.com; connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; frame-src https://polangela.github.io https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://polangela.github.io https://raw.githubusercontent.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://www.google.com; connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com https://api.mymemory.translated.net; frame-src 'self' https://nevercodejam.netlify.app https://polangela.github.io https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests;"
+
+# ── Nessun X-Frame-Options per l'editor (permette iframe interno) ──
+[[headers]]
+  for = "/editortestuale_v2.html"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Content-Security-Policy = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
 
 # ── SICUREZZA: intestazioni per le Netlify Functions ──
 [[headers]]
