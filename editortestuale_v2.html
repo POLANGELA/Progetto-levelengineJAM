@@ -6008,99 +6008,118 @@ const NODE_TYPES=[
 
     function isPortrait(){ return window.innerWidth < window.innerHeight; }
 
-    // Debounced FC.refresh to avoid lag during drag
     let _refreshRaf = null;
     function deferRefresh(){
       if(_refreshRaf) return;
-      _refreshRaf = requestAnimationFrame(()=>{ _refreshRaf=null; FC.refresh(); });
+      _refreshRaf = requestAnimationFrame(()=>{ _refreshRaf=null; if(typeof FC!=='undefined') FC.refresh(); });
     }
 
-    // Restore saved size
+    function clampWidth(v){
+      return Math.max(0, Math.min(body.offsetWidth - 20, v));
+    }
+
     function restoreSize(){
       const k = isPortrait()?'_fc_split_v':'_fc_split_h';
       const saved = localStorage.getItem(k);
       if(saved != null){
-        const v = parseInt(saved);
-        nl.style.width = Math.max(0, Math.min(window.innerWidth-40, v))+'px';
+        nl.style.width = clampWidth(parseInt(saved))+'px';
       } else {
-        if(isPortrait()) nl.style.width = Math.round(window.innerWidth * 0.42) + 'px';
-        else             nl.style.width = '260px';
+        nl.style.width = isPortrait()
+          ? Math.round(window.innerWidth * 0.42)+'px'
+          : '260px';
       }
-      setTimeout(()=>FC.refresh(), 30);
+      deferRefresh();
     }
 
     restoreSize();
-    window.addEventListener('orientationchange',()=>{ setTimeout(restoreSize,150); });
-    window.addEventListener('resize', ()=>{ setTimeout(restoreSize, 150); });
+    window.addEventListener('orientationchange',()=>setTimeout(restoreSize,200));
+    window.addEventListener('resize',()=>setTimeout(restoreSize,200));
 
     // ── Lock buttons ──
+    function unlockBtns(){
+      if(btnL) btnL.classList.remove('sp-locked');
+      if(btnR) btnR.classList.remove('sp-locked');
+    }
+    function animWidth(target, onDone){
+      nl.style.transition='width 0.2s ease';
+      nl.style.width = clampWidth(target)+'px';
+      setTimeout(()=>{ nl.style.transition=''; deferRefresh(); if(onDone)onDone(); }, 220);
+    }
     function lockLeft(){
-      // Show only map (full width left panel)
-      const bodyW = body.offsetWidth;
-      nl.style.transition = 'width 0.2s ease';
-      nl.style.width = (bodyW - 20) + 'px';
-      sp.style.display = '';
-      setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
-      localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', bodyW - 20);
-      btnL.classList.add('sp-locked'); btnR.classList.remove('sp-locked');
+      animWidth(body.offsetWidth - 20);
+      localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', body.offsetWidth - 20);
+      if(btnL) btnL.classList.add('sp-locked');
+      if(btnR) btnR.classList.remove('sp-locked');
     }
     function lockRight(){
-      // Show only detail (collapse map to 0)
-      nl.style.transition = 'width 0.2s ease';
-      nl.style.width = '0px';
-      setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
+      animWidth(0);
       localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', 0);
-      btnR.classList.add('sp-locked'); btnL.classList.remove('sp-locked');
+      if(btnR) btnR.classList.add('sp-locked');
+      if(btnL) btnL.classList.remove('sp-locked');
     }
-    function unlockBtns(){ btnL.classList.remove('sp-locked'); btnR.classList.remove('sp-locked'); }
-
     if(btnL) btnL.addEventListener('click', e=>{ e.stopPropagation(); lockLeft(); });
     if(btnR) btnR.addEventListener('click', e=>{ e.stopPropagation(); lockRight(); });
 
-    // ── Drag ──
-    let dragging=false, startX=0, startW=0;
+    // ── Drag — uses document listeners so pointer is never "lost" ──
+    let dragging=false, activePointerId=-1, startX=0, startW=0;
 
-    sp.addEventListener('pointerdown', e=>{
-      if(e.target === btnL || e.target === btnR) return;
-      e.preventDefault();
-      sp.setPointerCapture(e.pointerId);
-      dragging=true; sp.classList.add('sp-active');
-      startX=e.clientX;
-      startW=nl.offsetWidth;
-      unlockBtns();
-    });
-    sp.addEventListener('pointermove', e=>{
+    function stopDrag(){
       if(!dragging) return;
-      e.preventDefault();
-      const dx = e.clientX - startX;
-      const bodyW = body.offsetWidth;
-      const nw = Math.max(0, Math.min(bodyW - 20, startW + dx));
-      nl.style.width = nw + 'px';
-      deferRefresh(); // one RAF per frame, no jank
-    });
-    function onUp(){
-      if(!dragging) return;
-      dragging=false; sp.classList.remove('sp-active');
-      const k = isPortrait()?'_fc_split_v':'_fc_split_h';
-      localStorage.setItem(k, nl.offsetWidth);
+      dragging=false;
+      activePointerId=-1;
+      sp.classList.remove('sp-active');
+      try{ sp.releasePointerCapture && sp.releasePointerCapture(activePointerId); }catch(e){}
+      localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', nl.offsetWidth);
       deferRefresh();
     }
-    sp.addEventListener('pointerup', onUp);
-    sp.addEventListener('pointercancel', onUp);
+
+    sp.addEventListener('pointerdown', e=>{
+      if(e.target===btnL || e.target===btnR) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // Release any stale capture first
+      try{ sp.releasePointerCapture(e.pointerId); }catch(err){}
+      sp.setPointerCapture(e.pointerId);
+      dragging=true;
+      activePointerId=e.pointerId;
+      startX=e.clientX;
+      startW=nl.offsetWidth;
+      sp.classList.add('sp-active');
+      unlockBtns();
+    });
+
+    sp.addEventListener('pointermove', e=>{
+      if(!dragging || e.pointerId!==activePointerId) return;
+      e.preventDefault();
+      nl.style.width = clampWidth(startW + (e.clientX - startX))+'px';
+      deferRefresh();
+    });
+
+    // Listen on both sp AND document so pointerup is never missed
+    function handleUp(e){
+      if(!dragging) return;
+      if(e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+      stopDrag();
+    }
+    sp.addEventListener('pointerup', handleUp);
+    sp.addEventListener('pointercancel', handleUp);
+    sp.addEventListener('lostpointercapture', handleUp);
+    // Safety net: if pointer ends anywhere on the document
+    document.addEventListener('pointerup', handleUp, {capture:true});
+    document.addEventListener('pointercancel', handleUp, {capture:true});
 
     // Double-tap splitter: toggle collapse
     let _lastTap=0;
-    sp.addEventListener('pointerup', e=>{
-      if(e.target === btnL || e.target === btnR) return;
+    sp.addEventListener('click', e=>{
+      if(e.target===btnL || e.target===btnR) return;
       const now=Date.now();
-      if(now-_lastTap < 380){
+      if(now-_lastTap < 400){
         const cur=nl.offsetWidth, bodyW=body.offsetWidth;
         const target = cur > 20 ? 0 : Math.round(bodyW*(isPortrait()?0.42:0.4));
-        nl.style.transition='width 0.2s ease';
-        nl.style.width = target + 'px';
-        setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
+        animWidth(target);
         localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', target);
         unlockBtns();
+        _lastTap=0; return;
       }
       _lastTap=now;
     });
@@ -6828,32 +6847,42 @@ const FC = (function(){
     },{passive:false});
     canvas.addEventListener('touchend',e=>{if(e.touches.length<2)_pd=0;});
 
-    let lastTap=0;
+    // ── Tap su nodo: seleziona al primo tap, collassa/espandi mappa al secondo tap sullo stesso nodo ──
+    let _tapNodeTimer=null, _lastTappedId=null;
     canvas.addEventListener('pointerup',e=>{
-      const now=Date.now();
-      if(now-lastTap<320){
-        const[cx,cy]=getEvtPos(e),id=nodeAt(cx,cy);
-        if(id){
-          saveSettingsIfOpen();
-          if(selectedNodeId)saveCurrentNode(selectedNodeId);
-          selectedNodeId=id;
-          renderNodeList();
-          renderNodeDetail(id);
-          // On mobile: collapse the flowchart panel to give room to the detail panel
-          if(window._LE_DEVICE==='mobile'){
-            const nl=document.getElementById('edNodeList');
-            const sp=document.getElementById('edSplitter');
-            if(nl){
-              // If already collapsed, re-expand. Otherwise collapse.
-              const isCollapsed = parseInt(nl.style.width||'220') < 30;
-              nl.style.width = isCollapsed ? '220px' : '0px';
-              if(sp) sp.style.display = isCollapsed ? '' : 'none';
-              setTimeout(()=>FC.refresh(), 30);
-            }
-          }
-        }
+      // Ignora se era un drag con movimento
+      if(drag && drag.moved){ drag=null; return; }
+      const[cx,cy]=getEvtPos(e);
+      const id=nodeAt(cx,cy);
+      if(!id) return;
+
+      // Seleziona sempre al primo tap su qualsiasi nodo
+      if(selectedNodeId !== id){
+        saveSettingsIfOpen();
+        if(selectedNodeId) saveCurrentNode(selectedNodeId);
+        selectedNodeId=id;
+        renderNodeList();
+        renderNodeDetail(id);
       }
-      lastTap=now;
+
+      // Su mobile: secondo tap sullo stesso nodo collassa/espande la mappa
+      if(window._LE_DEVICE==='mobile'){
+        if(_lastTappedId === id){
+          clearTimeout(_tapNodeTimer);
+          _tapNodeTimer=null; _lastTappedId=null;
+          const nl=document.getElementById('edNodeList');
+          if(nl){
+            const isCollapsed = parseInt(nl.style.width||'220') < 30;
+            nl.style.transition='width 0.2s ease';
+            nl.style.width = isCollapsed ? '220px' : '0px';
+            setTimeout(()=>{ nl.style.transition=''; FC.refresh(); }, 220);
+          }
+          return;
+        }
+        clearTimeout(_tapNodeTimer);
+        _lastTappedId=id;
+        _tapNodeTimer=setTimeout(()=>{ _lastTappedId=null; _tapNodeTimer=null; }, 500);
+      }
     });
   }
 
@@ -6959,7 +6988,7 @@ function renderNodeDetail(nodeId){
   }
 
   let html=`
-    ${window._LE_DEVICE==='mobile' ? `<div id="mob-back-to-map" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0a0a0c;border-bottom:1px solid #1a1a1a;margin:-16px -14px 14px;cursor:pointer;touch-action:manipulation" onclick="(function(){const nl=document.getElementById('edNodeList');const sp=document.getElementById('edSplitter');if(nl){nl.style.width='220px';if(sp)sp.style.display='';setTimeout(()=>FC.refresh(),30);}})()"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:#446644;text-transform:uppercase">&#x2190; mappa nodi</span></div>` : ''}
+    ${window._LE_DEVICE==='mobile' ? `<div id="mob-back-to-map" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0a0a0c;border-bottom:1px solid #1a1a1a;margin:-16px -14px 14px;cursor:pointer;touch-action:manipulation" onclick="(function(){const nl=document.getElementById('edNodeList');const sp=document.getElementById('edSplitter');if(nl){nl.style.transition='width 0.2s ease';nl.style.width='220px';setTimeout(()=>{nl.style.transition='';FC.refresh();},220);}})()"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:#446644;text-transform:uppercase">&#x2190; mappa nodi</span></div>` : ''}
     <div class="ef-node-id-bar">
       <div class="ef-node-id">${esc(nodeId)}</div>
       <div class="ef-tag t-${node.type}">${nt.icon} ${nt.name}</div>
@@ -13585,6 +13614,13 @@ function _initWithDevice(){
   }
 }
 
+// ═══ FULLSCREEN AUTO-REQUEST ═══
+function _requestFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if(req) req.call(el).catch(()=>{});
+}
+
 document.addEventListener('DOMContentLoaded', async ()=>{
   // Rimuovi blob URL invalide dal localStorage prima di caricare
   _sanitizeLocalStorage();
@@ -13614,6 +13650,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       e.preventDefault();
     },{passive:false});
   }
+  // ── Fullscreen: prova subito, poi riprova al primo click utente
+  _requestFullscreen();
+  function _fsOnInteraction(){
+    _requestFullscreen();
+    document.removeEventListener('pointerdown', _fsOnInteraction);
+  }
+  document.addEventListener('pointerdown', _fsOnInteraction);
+
   // Wait two frames so layout/flex sizing is resolved before reading canvas dimensions
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     _initWithDevice();
