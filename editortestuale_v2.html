@@ -819,22 +819,45 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-base);font-
 
 /* ── Resizable splitter ── */
 #edSplitter{
-  flex:0 0 7px;
-  background:#111;
+  flex:0 0 20px;
+  background:#0e0e12;
   cursor:col-resize;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   touch-action:none;user-select:none;
   transition:background 0.15s;
   position:relative;z-index:10;
+  border-left:1px solid #1a1a22;
+  border-right:1px solid #1a1a22;
 }
-#edSplitter:hover,#edSplitter.sp-active{background:#333;}
-#edSplitter::after{
+#edSplitter:hover,#edSplitter.sp-active{background:#181824;}
+#edSplitter::before,#edSplitter::after{
   content:'';display:block;
-  width:3px;height:32px;
-  background:#333;border-radius:2px;
+  width:4px;height:14px;
+  background:#252535;border-radius:2px;
   transition:background 0.15s;
 }
-#edSplitter:hover::after,#edSplitter.sp-active::after{background:#888;}
+#edSplitter:hover::before,#edSplitter.sp-active::before,
+#edSplitter:hover::after,#edSplitter.sp-active::after{background:#4a4a6a;}
+/* Lock layout buttons inside splitter */
+#splitLockLeft,#splitLockRight{
+  position:absolute;
+  width:18px;height:18px;
+  background:#111118;
+  border:1px solid #252535;
+  border-radius:3px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;color:#3a3a5a;
+  touch-action:manipulation;
+  transition:all 0.15s;
+  left:1px;
+}
+#splitLockLeft{ top:10px; }
+#splitLockRight{ top:34px; }
+#splitLockLeft:active,#splitLockLeft.sp-locked,
+#splitLockRight:active,#splitLockRight.sp-locked{
+  background:#0d1a0d;border-color:#2a5a2a;color:#5a9a5a;
+}
 
 /* ═══ MOBILE BOTTOM SHEET (connect + context menu) ═══ */
 #mobileSheet{
@@ -2419,7 +2442,10 @@ body.mobile-mode .ef-label{
           <canvas id="fcMm"></canvas>
         </div>
       </div>
-      <div id="edSplitter"></div>
+      <div id="edSplitter">
+        <button id="splitLockLeft"  title="Tutto a sinistra (mappa)" style="font-size:9px">◀</button>
+        <button id="splitLockRight" title="Tutto a destra (dettaglio)" style="font-size:9px">▶</button>
+      </div>
       <div id="edDetail">
         <div id="edEmptyState">
           <div class="empty-icon">✦</div>
@@ -2716,1786 +2742,19 @@ let storyFlags = [];
 //  DEFAULT STORY
 // ═══════════════════════════════════════════════════
 const DEFAULT_STORY={
-  title:"DRALHEIM",startNode:"inizio",
-  settings:{
-    typeSpeed:34,linePause:1200,fadeTime:900,
-    showHud:true,hudStats:['tension'],
-    bgEffect:'stars',
-    textColor:'#cdc8bc',accentColor:'#aa7733',
-    splashEnabled:true,
-    splashTitle:"DRALHEIM",
-    splashSubtitle:"cacciatore di reliquie. debitore di qualcosa di peggio.",
-    splashButton:"entrare nel distretto"
+  title:"Nuova storia",startNode:"start",
+  settings:{typeSpeed:45,linePause:1400,fadeTime:1200,
+    showHud:false,hudStats:[],
+    bgEffect:'particles',
+    textColor:'#e0e0e0',accentColor:'#888888',
+    splashEnabled:false
   },
-  flags:[
-    'incontrato_ryn','incontrato_vorn','incontrato_sael','incontrato_oren',
-    'ryn_si_fida','vorn_si_fida','sael_si_fida','oren_si_fida',
-    'comprato_armatura','comprato_lama','comprato_pozione','comprato_amuleto',
-    'reliquia_a','reliquia_b','reliquia_c',
-    'cancello_aperto','cancello_sigillato','cancello_distrutto',
-    'tradito_ryn','tradito_oren',
-    'conosce_ash','conosce_il_custode','conosce_il_prezzo',
-    'dungeon_b1','dungeon_b2','dungeon_b3',
-    'bestia_sconfitta','custode_sconfitto','golem_sconfitto',
-    'sael_liberato','oren_corrotto'
-  ],
-  mechanics:{
-    salute:{
-      template:'stat',name:'salute',icon:'❤',
-      start:100,min:0,max:100,
-      showHud:true,hudLabel:'salute',
-      dangerThreshold:20,dangerEffect:'shake',
-      thresholdRules:[{op:'<=',value:0,node:'morte',once:true}]
-    },
-    forza:{
-      template:'stat',name:'forza',icon:'⚔',
-      start:30,min:0,max:100,
-      showHud:true,hudLabel:'forza',
-      dangerThreshold:5,dangerEffect:'glitch'
-    },
-    monete:{
-      template:'counter',name:'monete',icon:'🪙',
-      start:40,min:0,max:999,
-      showHud:true,hudLabel:'monete d\'argento',loop:false
-    },
-    corruzione:{
-      template:'stat',name:'corruzione',icon:'☠',
-      start:0,min:0,max:100,
-      showHud:true,hudLabel:'corruzione',
-      dangerThreshold:80,dangerEffect:'glitch',
-      thresholdRules:[{op:'>=',value:85,node:'corruzione_cede',once:true}]
-    }
-  },
-  npcs:{
-    ryn:{name:'RYN',color:'#7a9966',position:'left',displayMode:'image',spriteUrl:''},
-    vorn:{name:'VORN',color:'#997744',position:'right',displayMode:'image',spriteUrl:''},
-    sael:{name:'SAEL',color:'#6699aa',position:'left',displayMode:'image',spriteUrl:''},
-    oren:{name:'OREN',color:'#9966aa',position:'right',displayMode:'image',spriteUrl:''},
-    bestia:{name:'BESTIA DEL POZZO',color:'#cc5533',position:'center',displayMode:'image',spriteUrl:''},
-    custode:{name:'IL CUSTODE',color:'#8855cc',position:'center',displayMode:'image',spriteUrl:''},
-    golem:{name:'GOLEM DI CENERE',color:'#667766',position:'right',displayMode:'image',spriteUrl:''}
-  },
+  flags:[],
+  mechanics:{},
+  npcs:{},
   gameEntities:{},
   nodes:{
-
-    // ══════════════════════════════════════════════
-    //  ATTO 1 — DRALHEIM, ALBA
-    // ══════════════════════════════════════════════
-    "inizio":{type:"checkpoint",next:"intro"},
-
-    "intro":{type:"text",
-      lines:[
-        "Ti svegli a Dralheim.",
-        "La città è in guerra da tre anni. Non con un esercito.",
-        "Con qualcosa che non ha nome ma ha denti.",
-        "Tu sei un cacciatore di reliquie. O lo eri, prima.",
-        "Adesso sei debitore. La differenza è sottile."
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#ffaa33",fontWeight:"700",
-          customCSS:"animation:earthquake 0.4s ease-in-out infinite;display:inline-block"},
-        {id:"1-4",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:shakeIntense 0.6s ease-in-out infinite;display:inline-block"},
-        {id:"2-8",color:"#cc6633",fontWeight:"700",
-          customCSS:"animation:vibrate 0.15s linear infinite;display:inline-block"},
-        {id:"3-3",color:"#aacc77",fontWeight:"600",
-          customCSS:"animation:glow 2s ease-in-out infinite"},
-        {id:"3-5",color:"#aacc77",effect:"pulse"},
-        {id:"4-2",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:colorPulse 3s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1800,1700,1900,1600,1800],next:"intro2"},
-
-    "intro2":{type:"text",
-      lines:[
-        "Il debito è verso il Cancello di Ash.",
-        "Tre anni fa hai aperto qualcosa che non andava aperto.",
-        "Per rimborsarlo devi chiuderlo. Con tre Reliquie.",
-        "Ne hai zero. Il Cancello si apre tra sette giorni.",
-        "Benvenuto a Dralheim."
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"0-4",color:"#cc7700",fontWeight:"700"},
-        {id:"0-5",color:"#cc7700",fontWeight:"700"},
-        {id:"2-7",color:"#aacc77",effect:"pulse"},
-        {id:"2-8",color:"#aacc77",fontWeight:"600"},
-        {id:"3-1",color:"#ffffff",fontWeight:"700",
-          customCSS:"animation:flicker 1s step-end infinite;display:inline-block"},
-        {id:"3-9",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.4s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1700,1600,1700,1600,1200],next:"distretto"},
-
-    // ══════════════════════════════════════════════
-    //  HUB — DISTRETTO DELLE CENERI
-    // ══════════════════════════════════════════════
-    "distretto":{type:"checkpoint",next:"distretto_testo"},
-
-    "distretto_testo":{type:"text",
-      lines:[
-        "Il Distretto delle Ceneri è il cuore morto di Dralheim.",
-        "Tre taverne. Due armaioli. Un tempio dimenticato. Un mercato nero.",
-        "E Ryn — la tua contatto — che ti aspetta fuori dalla Fiamma Stanca.",
-        "Hai 40 monete d'argento e un'armatura che fa acqua."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#ffaa33",fontWeight:"700",
-          customCSS:"animation:earthquake 0.5s ease-in-out infinite;display:inline-block"},
-        {id:"0-2",color:"#ffaa33",fontWeight:"600"},
-        {id:"0-3",color:"#ffaa33",fontWeight:"600"},
-        {id:"0-9",color:"#ffaa33",fontWeight:"600",effect:"glow"},
-        {id:"1-8",color:"#553333"},
-        {id:"1-9",color:"#553333"},
-        {id:"2-1",color:"#7a9966",fontWeight:"600",effect:"pulse"},
-        {id:"2-12",color:"#cc9944",fontWeight:"600"},
-        {id:"2-13",color:"#cc9944",fontWeight:"600"},
-        {id:"3-1",color:"#ffcc44",fontWeight:"700",
-          customCSS:"animation:bounce 0.8s ease-in-out infinite;display:inline-block"},
-        {id:"3-2",color:"#ccaa55"},
-        {id:"3-3",color:"#ccaa55"}
-      ],
-      lineDelays:[1600,1700,1600,1500],
-      choices:[
-        {text:"andare da Ryn alla Fiamma Stanca",next:"ryn_arrivo"},
-        {text:"negozio di armi di Vorn",next:"vorn_negozio"},
-        {text:"il tempio senza nome",next:"tempio_entrata"},
-        {text:"il mercato nero di Oren",next:"oren_mercato"}
-      ]},
-
-    // ── RYN ──
-    "ryn_arrivo":{type:"checkpoint",next:"fiamma_testo"},
-    "fiamma_testo":{type:"text",
-      lines:[
-        "La Fiamma Stanca odora di birra acida e disperazione onesta.",
-        "Meglio di quanto suoni.",
-        "Ryn è al tavolo d'angolo. Sempre al tavolo d'angolo."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc9944",fontWeight:"600"},
-        {id:"0-2",color:"#cc9944",fontWeight:"600"},
-        {id:"2-0",color:"#7a9966",fontWeight:"600",effect:"pulse"}
-      ],
-      lineDelays:[1500,1200,1400],next:"ryn_intro"},
-
-    "ryn_intro":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Finalmente. Ti aspettavo da stamattina.'",
-        "— 'Siediti. Devi sentire quello che ho scoperto sulle Catacombe di Ash.'",
-        "— 'C'è una Reliquia laggiù. Una delle tre che chiudono il Cancello.'",
-        "— 'Ma c'è anche un Custode. E il Custode non negozia.'"
-      ],
-      wordStyles:[
-        {id:"1-9",color:"#cc6633",fontWeight:"700",
-          customCSS:"animation:glitchRGB 1.5s ease-in-out infinite;display:inline-block"},
-        {id:"1-10",color:"#cc6633",fontWeight:"600"},
-        {id:"1-11",color:"#cc6633",fontWeight:"600"},
-        {id:"2-3",color:"#aacc77",fontWeight:"600",effect:"pulse"},
-        {id:"2-11",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2.5s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"3-5",color:"#8855cc",fontWeight:"600"},
-        {id:"3-8",color:"#8855cc",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.7s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1700,1700,1600],next:"ryn_scelta"},
-
-    "ryn_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"'Dimmi delle tre Reliquie'",next:"ryn_reliquie"},
-      {text:"'Il Custode — cosa sappiamo?'",next:"ryn_custode"},
-      {text:"'Dove si trovano le altre due Reliquie?'",next:"ryn_mappa"},
-      {text:"'Posso permettermi equipaggiamento migliore?'",next:"ryn_soldi"}
-    ]},
-
-    "ryn_reliquie":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'La Prima Reliquia è nelle Catacombe di Ash. Livello tre, camera del Custode.'",
-        "— 'La Seconda è nella Torre di Brek, a nord. Sotto sorveglianza dell'Accordo.'",
-        "— 'La Terza... non lo so ancora. Ci sto lavorando.'",
-        "Pausa.",
-        "— 'Inizia dalle Catacombe. È la più vicina. E la più pericolosa. Il che mi preoccupa un po'.'"
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#aacc77",effect:"pulse",fontWeight:"600"},
-        {id:"0-4",color:"#cc6633",fontWeight:"600"},
-        {id:"0-5",color:"#cc6633",fontWeight:"600"},
-        {id:"1-3",color:"#aacc77",effect:"pulse",fontWeight:"600"},
-        {id:"1-5",color:"#aabbcc",fontWeight:"600"},
-        {id:"1-6",color:"#aabbcc",fontWeight:"600"},
-        {id:"2-2",color:"#aacc77",effect:"pulse",fontWeight:"600"}
-      ],
-      lineDelays:[1700,1700,1500,1100,1800],next:"ryn_incontrato_flag"},
-
-    "ryn_custode":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'È legato alle Catacombe da quando il Cancello si è aperto.'",
-        "— 'Non si muove. Non parla. Attacca chiunque si avvicini alla Reliquia.'",
-        "— 'Tranne, a quanto si dice, chi porta il Marchio di Ash.'"
-      ],
-      wordStyles:[
-        {id:"0-7",color:"#cc6633",fontWeight:"600"},
-        {id:"2-9",color:"#cc9944",fontWeight:"600",
-          customCSS:"animation:glow 1.5s ease-in-out infinite"}
-      ],
-      lineDelays:[1600,1600,1600],next:"conosce_custode_flag"},
-    "conosce_custode_flag":{type:"setflag",flag:"conosce_il_custode",value:true,next:"ryn_incontrato_flag"},
-
-    "ryn_mappa":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Catacombe di Ash per la Prima.'",
-        "— 'Torre di Brek per la Seconda. Lì ci vuole un approccio diverso — l'Accordo controlla l'accesso.'",
-        "— 'La Terza... sto aspettando una risposta da un contatto a est.'",
-        "— 'Tre giorni. Forse quattro. Il Cancello ne ha sette.'",
-        "— 'Non perdere tempo.'"
-      ],
-      wordStyles:[
-        {id:"3-3",color:"#ffffff",fontWeight:"700",
-          customCSS:"animation:flicker 0.8s step-end infinite;display:inline-block"},
-        {id:"3-6",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.5s ease-in-out infinite;display:inline-block"},
-        {id:"3-7",color:"#cc4444",fontWeight:"600"}
-      ],
-      lineDelays:[1500,1700,1500,1700,1100],next:"ryn_incontrato_flag"},
-
-    "ryn_soldi":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Quaranta monete è pochissimo per quello che ti aspetta.'",
-        "— 'Vorn ha materiale decente. Caro, ma vale.'",
-        "— 'Oren ha roba più... irregolare. Efficace però.'",
-        "— 'Il tempio senza nome a volte ha artefatti. Non chiedermi come ci finiscono.'"
-      ],
-      wordStyles:[
-        {id:"1-0",color:"#997744",fontWeight:"600",effect:"pulse"},
-        {id:"2-0",color:"#9966aa",fontWeight:"600",effect:"pulse"},
-        {id:"3-2",color:"#6688aa",fontWeight:"600"}
-      ],
-      lineDelays:[1600,1500,1500,1600],next:"ryn_incontrato_flag"},
-
-    "ryn_incontrato_flag":{type:"setflag",flag:"incontrato_ryn",value:true,next:"ryn_si_fida_flag"},
-    "ryn_si_fida_flag":{type:"setflag",flag:"ryn_si_fida",value:true,next:"distretto"},
-
-    // ── NEGOZIO VORN ──
-    "vorn_negozio":{type:"checkpoint",next:"vorn_testo"},
-    "vorn_testo":{type:"text",
-      lines:[
-        "Vorn vende ferramenta usata e fa finta di non capire le domande difficili.",
-        "Il suo negozio odora di olio di pietra e scelte sbagliate.",
-        "— 'Compra o esci. Non ho tempo per i curiosi.'"
-      ],
-      wordStyles:[
-        {id:"0-0",color:"#997744",fontWeight:"600"},
-        {id:"1-9",color:"#884422",
-          customCSS:"animation:wobble 1.5s ease-in-out infinite;display:inline-block"},
-        {id:"1-10",color:"#884422",fontWeight:"600"}
-      ],
-      lineDelays:[1500,1500,1300],next:"vorn_shop"},
-
-    "vorn_shop":{type:"text",
-      lines:["Cosa compri? (le tue monete attuali sono visibili nell'HUD)"],
-      lineDelays:[1000],
-      choices:[
-        {text:"Lama d'Acciaio Antico — 25 monete (+20 forza)",next:"vorn_compra_lama"},
-        {text:"Armatura di Cuoio Rinforzato — 20 monete (+30 salute max)",next:"vorn_compra_armatura"},
-        {text:"Fiala di Ricomposizione — 15 monete (ripristina 40 salute)",next:"vorn_compra_fiala"},
-        {text:"non comprare niente",next:"distretto"}
-      ]},
-
-    "vorn_compra_lama":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:25,
-      trueNext:"vorn_lama_ok",falseNext:"vorn_no_soldi"},
-    "vorn_lama_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-25,mode:"add"},{mechId:"forza",delta:20,mode:"add"}],
-      next:"vorn_lama_inv"},
-    "vorn_lama_inv":{type:"inventory",action:"add",item:"⚔",
-      itemName:"Lama d'Acciaio Antico",
-      itemDescription:"Forgiata prima della guerra. Tiene il filo meglio di qualsiasi cosa trovata dopo.",
-      itemRarity:"uncommon",
-      itemModifiers:[{mechId:"forza",op:"add",value:20}],
-      next:"vorn_post_acquisto"},
-
-    "vorn_compra_armatura":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:20,
-      trueNext:"vorn_armatura_ok",falseNext:"vorn_no_soldi"},
-    "vorn_armatura_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-20,mode:"add"},{mechId:"salute",delta:30,mode:"add"}],
-      next:"vorn_armatura_inv"},
-    "vorn_armatura_inv":{type:"inventory",action:"add",item:"🛡",
-      itemName:"Armatura di Cuoio Rinforzato",
-      itemDescription:"Non è bella. È intera, che è più importante.",
-      itemRarity:"common",
-      itemModifiers:[{mechId:"salute",op:"add",value:30}],
-      next:"vorn_post_acquisto"},
-
-    "vorn_compra_fiala":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:15,
-      trueNext:"vorn_fiala_ok",falseNext:"vorn_no_soldi"},
-    "vorn_fiala_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-15,mode:"add"}],
-      next:"vorn_fiala_inv"},
-    "vorn_fiala_inv":{type:"inventory",action:"add",item:"⚗",
-      itemName:"Fiala di Ricomposizione",
-      itemDescription:"Ripristina 40 salute quando usata. Sapore pessimo.",
-      itemRarity:"common",
-      next:"vorn_post_acquisto"},
-
-    "vorn_no_soldi":{type:"character",npcId:"vorn",
-      lines:["— 'Monete insufficienti.'","— 'Torna quando hai i fondi.'"
-      ],lineDelays:[1200,1200],next:"distretto"},
-
-    "vorn_post_acquisto":{type:"character",npcId:"vorn",
-      lines:[
-        "— 'Buona scelta.'",
-        "— 'Per quello che ti aspetta, comunque.'",
-        "— 'Torna se sopravvivi.'"
-      ],
-      wordStyles:[
-        {id:"2-1",color:"#884422",
-          customCSS:"animation:rubberBand 1s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1200,1400,1200],next:"vorn_incontrato_flag"},
-    "vorn_incontrato_flag":{type:"setflag",flag:"incontrato_vorn",value:true,next:"vorn_si_fida_flag"},
-    "vorn_si_fida_flag":{type:"setflag",flag:"vorn_si_fida",value:true,next:"distretto"},
-
-    // ── TEMPIO SENZA NOME / SAEL ──
-    "tempio_entrata":{type:"checkpoint",next:"tempio_testo"},
-    "tempio_testo":{type:"text",
-      lines:[
-        "Il tempio non ha nome. Nessuno ricorda a quale dio fosse dedicato.",
-        "Le statue hanno i volti cancellati. Deliberatamente, dall'aspetto.",
-        "C'è ancora qualcuno qui dentro. Lo senti dal modo in cui l'aria non si muove."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#6688aa",fontWeight:"600"},
-        {id:"1-1",color:"#888899",
-          customCSS:"animation:flicker 2s step-end infinite;display:inline-block"},
-        {id:"1-4",color:"#888899",fontWeight:"600"},
-        {id:"1-5",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:glitchRGB 2s ease-in-out infinite;display:inline-block"},
-        {id:"2-2",color:"#9999bb",fontWeight:"600"}
-      ],
-      lineDelays:[1700,1700,1600],next:"tempio_scelta"},
-
-    "tempio_scelta":{type:"text",lines:["Cosa fai?"],lineDelays:[800],choices:[
-      {text:"esplorare l'altare principale",next:"tempio_altare"},
-      {text:"cercare qualcuno",next:"tempio_sael_testo"},
-      {text:"esaminare le statue senza volto",next:"tempio_statue"}
-    ]},
-
-    "tempio_statue":{type:"text",
-      lines:[
-        "Ci sono dodici statue. Erano guerrieri, forse sacerdoti.",
-        "I volti sono stati rimossi con uno scalpello — il lavoro è preciso, non rabbioso.",
-        "Qualcuno non voleva che fossero riconosciuti.",
-        "O non voleva che loro potessero vedere."
-      ],
-      wordStyles:[
-        {id:"1-9",color:"#555566"},
-        {id:"1-10",color:"#555566"},
-        {id:"1-11",color:"#555566"}
-      ],
-      lineDelays:[1600,1700,1500,1500],next:"tempio_scelta"},
-
-    "tempio_altare":{type:"text",
-      lines:[
-        "L'altare centrale è coperto di cenere fresca.",
-        "Non bruciata — deposta. Qualcuno la aggiunge regolarmente.",
-        "Sotto la cenere: un simbolo inciso nella pietra. Non lo riconosci. Il tuo stomaco sì."
-      ],
-      wordStyles:[
-        {id:"0-6",color:"#999988",
-          customCSS:"animation:fadeInOut 2s ease-in-out infinite;display:inline-block"},
-        {id:"2-12",color:"#cc9944",fontWeight:"600",
-          customCSS:"animation:pulse 1.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1600,1800],next:"tempio_altare_scelta"},
-    "tempio_altare_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"toccare il simbolo",next:"tempio_tocca_simbolo"},
-      {text:"lasciar perdere e cercare Sael",next:"tempio_sael_testo"}
-    ]},
-    "tempio_tocca_simbolo":{type:"effect",effect:"glitch",duration:600,next:"tempio_tocca_testo"},
-    "tempio_tocca_testo":{type:"text",
-      lines:[
-        "Non succede niente di visibile.",
-        "Dentro: qualcosa cambia frequenza.",
-        "Come se tu avessi bussato a una porta che esiste in un posto diverso.",
-        "Poi: una voce da qualche parte in fondo alla navata.",
-        "— 'Interessante. Non molti toccano ancora quella pietra.'"
-      ],
-      wordStyles:[
-        {id:"2-7",color:"#6688aa",fontWeight:"600"}
-      ],
-      lineDelays:[1400,1600,1700,1500,1700],next:"tempio_sael_arrivo"},
-
-    "tempio_sael_testo":{type:"text",
-      lines:[
-        "In fondo alla navata: una figura in abiti scuri.",
-        "Alta, con le dita macchiate d'inchiostro.",
-        "Ti nota. Non sembra sorpresa."
-      ],
-      wordStyles:[
-        {id:"1-7",color:"#6688aa"}
-      ],
-      lineDelays:[1500,1400,1300],next:"tempio_sael_arrivo"},
-    "tempio_sael_arrivo":{type:"character",npcId:"sael",
-      lines:[
-        "— 'Stai cercando qualcosa nel tempio o nel tempio stai cercando qualcuno?'",
-        "— 'Perché c'è differenza.'",
-        "— 'Io sono Sael. Mi occupo degli archivi di questo posto.'",
-        "— 'Archivi di cosa, esattamente, è una domanda complicata.'"
-      ],
-      wordStyles:[
-        {id:"2-3",color:"#6699aa",fontWeight:"600",effect:"pulse"}
-      ],
-      lineDelays:[1700,1200,1500,1500],next:"sael_scelta"},
-
-    "sael_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"'Sto cercando informazioni sul Cancello di Ash'",next:"sael_cancello"},
-      {text:"'Hai artefatti in vendita?'",next:"sael_shop"},
-      {text:"'Cosa sono questi archivi?'",next:"sael_archivi"}
-    ]},
-
-    "sael_cancello":{type:"character",npcId:"sael",
-      lines:[
-        "Tira fuori un libro sottile. Rilegato in pelle grigia.",
-        "— 'Questo è il registro dei Cancelli. Ce ne sono undici documentati.'",
-        "— 'Il Cancello di Ash è il più recente. E il meno stabile.'",
-        "— 'Sapevi che ha una memoria? Ricorda chi lo ha aperto.'"
-      ],
-      wordStyles:[
-        {id:"1-6",color:"#6699dd",fontWeight:"600"},
-        {id:"3-6",color:"#cc9944",fontWeight:"600",
-          customCSS:"animation:glow 1.8s ease-in-out infinite"},
-        {id:"3-10",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:pulse 1.2s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1700,1600,1700],next:"conosce_ash_flag"},
-    "conosce_ash_flag":{type:"setflag",flag:"conosce_ash",value:true,next:"sael_scelta"},
-
-    "sael_archivi":{type:"character",npcId:"sael",
-      lines:[
-        "— 'Archivi di tutto quello che esisteva prima che le persone decidessero di non ricordarlo.'",
-        "— 'Leggi. Bestie. Riti. Debiti magici non estinti.'",
-        "Si ferma.",
-        "— 'Quel simbolo sull'altare, per esempio. Lo conosci?'",
-        "— 'È il sigillo di chi ha costruito le Catacombe di Ash. Tre secoli fa.'"
-      ],
-      wordStyles:[
-        {id:"1-0",color:"#664444"},
-        {id:"1-1",color:"#666644"},
-        {id:"1-2",color:"#444466"},
-        {id:"4-7",color:"#cc6633",fontWeight:"600"}
-      ],
-      lineDelays:[1700,1500,1100,1600,1600],next:"sael_scelta"},
-
-    "sael_shop":{type:"text",
-      lines:["Sael apre un cassetto e tira fuori tre oggetti.","Li mette sul tavolo come se li pesasse."],
-      lineDelays:[1500,1400],next:"sael_shop_scelta"},
-    "sael_shop_scelta":{type:"text",
-      lines:["Cosa ti interessa?"],
-      lineDelays:[800],choices:[
-        {text:"Amuleto del Passante — 20 monete (-10 corruzione passiva)",next:"sael_compra_amuleto"},
-        {text:"Pergamena del Marchio di Ash — 30 monete (sblocca dialogo col Custode)",next:"sael_compra_marchio"},
-        {text:"Antidoto alla Cenere — 10 monete (+riduce corruzione di 20)",next:"sael_compra_antidoto"},
-        {text:"niente, grazie",next:"distretto"}
-      ]},
-
-    "sael_compra_amuleto":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:20,
-      trueNext:"sael_amuleto_ok",falseNext:"sael_no_soldi"},
-    "sael_amuleto_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-20,mode:"add"},{mechId:"corruzione",delta:-10,mode:"add"}],
-      next:"sael_amuleto_inv"},
-    "sael_amuleto_inv":{type:"inventory",action:"add",item:"🔮",
-      itemName:"Amuleto del Passante",
-      itemDescription:"Riduce la corruzione accumulata dal contatto con magia oscura.",
-      itemRarity:"uncommon",
-      itemModifiers:[{mechId:"corruzione",op:"subtract",value:10}],
-      next:"sael_post_acquisto"},
-
-    "sael_compra_marchio":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:30,
-      trueNext:"sael_marchio_ok",falseNext:"sael_no_soldi"},
-    "sael_marchio_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-30,mode:"add"}],
-      next:"sael_marchio_inv"},
-    "sael_marchio_inv":{type:"inventory",action:"add",item:"🔖",
-      itemName:"Marchio di Ash — Pergamena",
-      itemDescription:"Il simbolo del costruttore delle Catacombe. Il Custode lo riconosce.",
-      itemRarity:"rare",
-      next:"marchio_flag"},
-    "marchio_flag":{type:"setflag",flag:"conosce_il_custode",value:true,next:"sael_post_acquisto"},
-
-    "sael_compra_antidoto":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:10,
-      trueNext:"sael_antidoto_ok",falseNext:"sael_no_soldi"},
-    "sael_antidoto_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-10,mode:"add"},{mechId:"corruzione",delta:-20,mode:"add"}],
-      next:"sael_antidoto_inv"},
-    "sael_antidoto_inv":{type:"inventory",action:"add",item:"💊",
-      itemName:"Antidoto alla Cenere",
-      itemDescription:"Riduce la corruzione da esposizione a Cenere oscura. Uso singolo.",
-      itemRarity:"common",
-      itemModifiers:[{mechId:"corruzione",op:"subtract",value:20}],
-      next:"sael_post_acquisto"},
-
-    "sael_no_soldi":{type:"character",npcId:"sael",
-      lines:["— 'Non ho il sistema di scambio di credito.'","— 'Torna con le monete.'"],
-      lineDelays:[1300,1200],next:"distretto"},
-
-    "sael_post_acquisto":{type:"character",npcId:"sael",
-      lines:[
-        "— 'Buona fortuna.'",
-        "— 'Nelle Catacombe, cerca la camera con le iscrizioni a spirale. Non quella con la luce.'",
-        "— 'Non è mai la camera con la luce.'"
-      ],
-      wordStyles:[
-        {id:"2-6",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:flicker 0.6s step-end infinite;display:inline-block"}
-      ],
-      lineDelays:[1200,1700,1400],next:"sael_incontrato_flag"},
-    "sael_incontrato_flag":{type:"setflag",flag:"incontrato_sael",value:true,next:"sael_si_fida_flag"},
-    "sael_si_fida_flag":{type:"setflag",flag:"sael_si_fida",value:true,next:"distretto"},
-
-    // ── MERCATO NERO / OREN ──
-    "oren_mercato":{type:"checkpoint",next:"oren_testo"},
-    "oren_testo":{type:"text",
-      lines:[
-        "Il mercato nero di Dralheim è un vicolo che cambia posizione ogni due giorni.",
-        "Oggi è dietro la vecchia torre delle guardie.",
-        "Oren ci sta sempre, indipendentemente da dove sia il vicolo."
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#9966aa",fontWeight:"600"},
-        {id:"0-4",color:"#553355"}
-      ],
-      lineDelays:[1600,1400,1500],next:"oren_intro"},
-    "oren_intro":{type:"character",npcId:"oren",
-      lines:[
-        "— 'Ah. Il cacciatore.'",
-        "— 'Ho sentito della tua... situazione con il Cancello.'",
-        "— 'Devo ammettere che mi è sembrato imprudente. Aprire quel tipo di Porta.'",
-        "— 'Ma ora sei qui. E io ho cose che ti servono.'"
-      ],
-      wordStyles:[
-        {id:"2-8",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"3-6",color:"#9966aa",effect:"pulse"}
-      ],
-      lineDelays:[1200,1600,1700,1500],next:"oren_scelta"},
-    "oren_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"'Cosa hai in vendita?'",next:"oren_shop"},
-      {text:"'Come sai del Cancello?'",next:"oren_sa_del_cancello"},
-      {text:"'Non mi fido di te'",next:"oren_no_fiducia"}
-    ]},
-
-    "oren_sa_del_cancello":{type:"character",npcId:"oren",
-      lines:[
-        "— 'So molte cose. È il mio lavoro.'",
-        "— 'Tre anni fa ero lì quando qualcuno ha pronunciato la formula sbagliata.'",
-        "— 'Non ero vicino abbastanza da vedere chi. Ma abbastanza da capire cosa.'",
-        "Sorride.",
-        "— 'Compra qualcosa e forse te lo dico.'"
-      ],
-      wordStyles:[
-        {id:"2-7",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:colorPulse 2s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1300,1600,1600,1000,1500],next:"oren_shop"},
-
-    "oren_no_fiducia":{type:"character",npcId:"oren",
-      lines:[
-        "— 'Saggio.'",
-        "— 'Non dovresti fidarti di me.'",
-        "— 'Compra comunque. La merce è buona anche se il venditore è discutibile.'"
-      ],
-      lineDelays:[1000,1300,1500],next:"oren_shop"},
-
-    "oren_shop":{type:"text",
-      lines:["Il banco di Oren è una cassa di legno con un telo sopra.","Efficace."],
-      lineDelays:[1400,900],next:"oren_shop_scelta"},
-    "oren_shop_scelta":{type:"text",lines:["Cosa compri?"],lineDelays:[800],choices:[
-      {text:"Estratto di Bile Oscura — 12 monete (danno +15 prossimo combattimento)",next:"oren_compra_bile"},
-      {text:"Mappa delle Catacombe — 25 monete (sblocca comandi parser segreti)",next:"oren_compra_mappa"},
-      {text:"Veleno da Contatto — 18 monete (+10 forza in combattimento vs non-umani)",next:"oren_compra_veleno"},
-      {text:"Informazioni su Oren — gratis",next:"oren_info"}
-    ]},
-
-    "oren_compra_bile":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:12,
-      trueNext:"oren_bile_ok",falseNext:"oren_no_soldi"},
-    "oren_bile_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-12,mode:"add"},{mechId:"forza",delta:15,mode:"add"}],
-      next:"oren_bile_inv"},
-    "oren_bile_inv":{type:"inventory",action:"add",item:"🟣",
-      itemName:"Estratto di Bile Oscura",
-      itemDescription:"+15 forza al prossimo combattimento. Non chiedere da dove viene.",
-      itemRarity:"uncommon",
-      itemModifiers:[{mechId:"forza",op:"add",value:15}],
-      next:"oren_post_acquisto"},
-
-    "oren_compra_mappa":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:25,
-      trueNext:"oren_mappa_ok",falseNext:"oren_no_soldi"},
-    "oren_mappa_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-25,mode:"add"}],
-      next:"oren_mappa_inv"},
-    "oren_mappa_inv":{type:"inventory",action:"add",item:"📄",
-      itemName:"Mappa delle Catacombe — Oren",
-      itemDescription:"Tracciata da qualcuno che è entrato e uscito. Questo è già impressionante.",
-      itemRarity:"rare",
-      next:"mappa_flag"},
-    "mappa_flag":{type:"setflag",flag:"dungeon_b1",value:true,next:"oren_post_acquisto"},
-
-    "oren_compra_veleno":{type:"condition",
-      condType:"mech",mechId:"monete",mechOp:">=",mechCmpValue:18,
-      trueNext:"oren_veleno_ok",falseNext:"oren_no_soldi"},
-    "oren_veleno_ok":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:-18,mode:"add"},{mechId:"forza",delta:10,mode:"add"}],
-      next:"oren_veleno_inv"},
-    "oren_veleno_inv":{type:"inventory",action:"add",item:"🐍",
-      itemName:"Veleno da Contatto",
-      itemDescription:"+10 forza contro creature non-umane. Efficace. Illegale a Dralheim.",
-      itemRarity:"uncommon",
-      itemModifiers:[{mechId:"forza",op:"add",value:10}],
-      next:"oren_post_acquisto"},
-
-    "oren_info":{type:"character",npcId:"oren",
-      lines:[
-        "— 'Gratis?'",
-        "— 'Bene, gratis: ho vissuto a Dralheim per trent'anni.'",
-        "— 'Ho visto tre Cacciatori cercare di chiudere il Cancello di Ash.'",
-        "— 'Uno ci è riuscito. Gli altri due... non so dove siano adesso.'",
-        "— 'Forse dentro il Cancello. Forse altrove. Forse è la stessa cosa.'"
-      ],
-      wordStyles:[
-        {id:"3-3",color:"#cc9944",fontWeight:"600"},
-        {id:"4-6",color:"#554444",fontWeight:"600",
-          customCSS:"animation:fadeInOut 2s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[900,1600,1700,1600,1600],next:"oren_incontrato_flag"},
-
-    "oren_no_soldi":{type:"character",npcId:"oren",
-      lines:["— 'Non ho il sistema del credito.'","— 'Guadagna qualcosa prima di tornare.'"],
-      lineDelays:[1200,1300],next:"distretto"},
-
-    "oren_post_acquisto":{type:"character",npcId:"oren",
-      lines:[
-        "— 'Buona scelta.'",
-        "— 'Per le Catacombe: non fermarti mai davanti alla porta con i segni di artiglio.'",
-        "— 'Non perché sia pericoloso. Perché non è una porta.'"
-      ],
-      wordStyles:[
-        {id:"1-2",color:"#cc6633",fontWeight:"600"},
-        {id:"2-5",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:shakeIntense 0.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1200,1700,1500],next:"oren_incontrato_flag"},
-    "oren_incontrato_flag":{type:"setflag",flag:"incontrato_oren",value:true,next:"oren_si_fida_flag"},
-    "oren_si_fida_flag":{type:"setflag",flag:"oren_si_fida",value:true,next:"distretto"},
-
-    // ══════════════════════════════════════════════
-    //  ATTO 2 — CATACOMBE DI ASH
-    // ══════════════════════════════════════════════
-    "catacombe_entrata":{type:"checkpoint",next:"catacombe_testo"},
-    "catacombe_testo":{type:"text",
-      lines:[
-        "Le Catacombe di Ash si aprono sotto il quartiere vecchio.",
-        "Buio. Pietra bagnata. Qualcosa che respira più in basso.",
-        "Hai una torcia. Per ora."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc6633",fontWeight:"600",
-          customCSS:"animation:glitchRGB 2s ease-in-out infinite;display:inline-block"},
-        {id:"0-2",color:"#cc6633"},
-        {id:"0-3",color:"#cc9944",fontWeight:"700"},
-        {id:"1-3",color:"#888877",fontWeight:"600",
-          customCSS:"animation:breathe 2s ease-in-out infinite;display:inline-block"},
-        {id:"1-5",color:"#888877"}
-      ],
-      lineDelays:[1700,1600,1300],next:"catacombe_b1"},
-
-    "catacombe_b1":{type:"parser",
-      prompt:"primo livello — cosa fai?",
-      failMessage:"non sembra una strada percorribile.",
-      lines:[
-        "Primo livello. Corridoi di pietra calcarea. Torce esaurite nei supporti.",
-        "Tre direzioni: nord verso le camere sigillate, ovest verso il pozzo, est verso la discesa."
-      ],
-      lineDelays:[1700,1700],
-      commands:[
-        {keywords:"nord,camere,sigillate,sigillo",match:"contains",next:"catacombe_camere_sigillate"},
-        {keywords:"ovest,pozzo,acqua",match:"contains",next:"catacombe_pozzo"},
-        {keywords:"est,scendi,discesa,giu,giù,basso",match:"contains",next:"catacombe_b2_check"},
-        {keywords:"esamina,guarda,intorno,ispezione,cerca",match:"contains",next:"catacombe_b1_ispezione"},
-        {keywords:"mappa,dove,orientati,orienta",match:"contains",condType:"flag",condition:"dungeon_b1",next:"catacombe_usa_mappa"},
-        {keywords:"torna,indietro,esci",match:"contains",next:"distretto"}
-      ]},
-
-    "catacombe_b1_ispezione":{type:"text",
-      lines:[
-        "Le pareti sono incise con spirali.",
-        "Alcune sono recenti — qualcuno le sta aggiungendo.",
-        "Ai piedi del muro nord: un sacchetto di cuoio. Abbandonato in fretta."
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#9999aa",
-          customCSS:"animation:rotate 4s linear infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1600,1500],next:"catacombe_b1_sacchetto"},
-    "catacombe_b1_sacchetto":{type:"inventory",action:"add",item:"💰",
-      itemName:"Sacchetto abbandonato",
-      itemDescription:"15 monete d'argento e un appunto: 'non andare al pozzo. non è un pozzo.'",
-      itemRarity:"common",
-      next:"catacombe_b1_monete"},
-    "catacombe_b1_monete":{type:"effect",effect:"flash",duration:300,
-      mechChanges:[{mechId:"monete",delta:15,mode:"add"}],
-      next:"catacombe_b1"},
-
-    "catacombe_usa_mappa":{type:"text",
-      lines:[
-        "La mappa di Oren mostra tre camere al primo livello.",
-        "Una marcata con una X — 'non entrare'.",
-        "Una marcata con un cerchio — 'stai attento'.",
-        "Una senza segni — 'probabilmente ok, non sono sicuro'."
-      ],
-      wordStyles:[
-        {id:"1-5",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.4s ease-in-out infinite;display:inline-block"},
-        {id:"2-4",color:"#aacc77",fontWeight:"600"}
-      ],
-      lineDelays:[1600,1500,1500,1600],next:"catacombe_b1"},
-
-    "catacombe_camere_sigillate":{type:"text",
-      lines:[
-        "Le camere sigillate hanno porte di pietra con incisioni di contenimento.",
-        "Una è già aperta. Il sigillo è rotto da dentro.",
-        "Dentro: niente. Solo graffi sul pavimento che vanno verso l'uscita."
-      ],
-      wordStyles:[
-        {id:"1-7",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:flicker 0.7s step-end infinite;display:inline-block"},
-        {id:"1-8",color:"#cc4444"}
-      ],
-      lineDelays:[1700,1600,1600],
-      mechChanges:[{mechId:"corruzione",delta:5,mode:"add"}],
-      next:"catacombe_b1"},
-
-    "catacombe_pozzo":{type:"text",
-      lines:[
-        "Non è un pozzo.",
-        "È un foro nel pavimento largo tre metri con qualcosa che respira dentro.",
-        "La respirazione è irregolare. Come qualcuno che conta fino a dieci prima di fare una cosa."
-      ],
-      wordStyles:[
-        {id:"0-0",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:earthquake 0.3s ease-in-out infinite;display:inline-block"},
-        {id:"1-8",color:"#cc5533",fontWeight:"600",
-          customCSS:"animation:breathe 3s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1700,1800],next:"catacombe_pozzo_scelta"},
-    "catacombe_pozzo_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"guardare dentro",next:"catacombe_pozzo_guarda"},
-      {text:"lasciare stare",next:"catacombe_b1"}
-    ]},
-    "catacombe_pozzo_guarda":{type:"text",
-      lines:[
-        "Buio. Poi un riflesso.",
-        "Qualcosa di grande si muove.",
-        "Poi sbuca fuori."
-      ],
-      wordStyles:[
-        {id:"2-3",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.3s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1400,1400,900],next:"bestia_pozzo_combattimento"},
-
-    "bestia_pozzo_combattimento":{type:"combat",npcId:"bestia",
-      npcHp:45,npcAttack:{min:12,max:20},npcDefense:5,npcHitChance:75,
-      playerHpMech:"salute",
-      actions:[
-        {label:"colpisci al fianco",dmgMin:12,dmgMax:20,hitChance:75,
-          hitText:"Il colpo al fianco la rallenta. Qualcosa di scuro gocciola.",
-          missText:"Troppo veloce per la sua dimensione. Schiva."},
-        {label:"usa il veleno",dmgMin:18,dmgMax:28,hitChance:80,
-          hitText:"Il veleno da contatto reagisce alla sua pelle. Urla.",
-          missText:"Non riesci ad avvicinartici abbastanza.",
-          requireItem:"🐍"},
-        {label:"usa l'estratto di bile",dmgMin:22,dmgMax:32,hitChance:70,
-          hitText:"L'estratto potenziato fa il suo lavoro. Danni seri.",
-          missText:"Il colpo manca. L'estratto si spreca.",
-          requireItem:"🟣"},
-        {label:"ritirati al corridoio",flee:true,fleeChance:65}
-      ],
-      winNext:"bestia_sconfitta_testo",loseNext:"bestia_ti_colpisce"},
-
-    "bestia_sconfitta_testo":{type:"text",
-      lines:[
-        "La Bestia del Pozzo affonda di nuovo nel buco.",
-        "Non morta. Ritirata.",
-        "Sul bordo del pozzo: qualcosa che ha lasciato cadere."
-      ],
-      wordStyles:[{id:"0-2",color:"#cc5533",fontWeight:"600"}],
-      lineDelays:[1500,1300,1500],next:"bestia_loot"},
-    "bestia_loot":{type:"inventory",action:"add",item:"🦴",
-      itemName:"Artiglio della Bestia",
-      itemDescription:"Duro come acciaio. Puoi usarlo come leva o come arma improvvisata.",
-      itemRarity:"uncommon",
-      itemModifiers:[{mechId:"forza",op:"add",value:8}],
-      next:"bestia_flag"},
-    "bestia_flag":{type:"setflag",flag:"bestia_sconfitta",value:true,next:"catacombe_b1"},
-
-    "bestia_ti_colpisce":{type:"text",
-      lines:[
-        "La Bestia ti lancia contro il muro.",
-        "Riesci a scappare nel corridoio. Dolorosamente.",
-        "La bestia non ti segue. Per ora."
-      ],
-      lineDelays:[1400,1500,1400],
-      mechChanges:[{mechId:"salute",delta:-25,mode:"add"},{mechId:"corruzione",delta:8,mode:"add"}],
-      next:"catacombe_b1"},
-
-    "catacombe_b2_check":{type:"condition",flag:"dungeon_b1",trueNext:"catacombe_b2",falseNext:"catacombe_b2_cieco"},
-    "catacombe_b2_cieco":{type:"text",
-      lines:[
-        "Il secondo livello è più buio.",
-        "Senza riferimenti, ti perdi due volte prima di trovare un ancoraggio.",
-        "Perdi tempo. Perdi una torcia."
-      ],
-      lineDelays:[1500,1600,1400],
-      mechChanges:[{mechId:"salute",delta:-10,mode:"add"}],
-      next:"catacombe_b2"},
-
-    "catacombe_b2":{type:"checkpoint",next:"catacombe_b2_testo"},
-    "catacombe_b2_testo":{type:"text",
-      lines:[
-        "Secondo livello. Le spirali qui sono più dense.",
-        "L'aria sa di qualcosa che non ha una parola in nessuna lingua che conosci.",
-        "Due percorsi: la camera con la luce (a nord) e la camera con le iscrizioni a spirale (a ovest)."
-      ],
-      wordStyles:[
-        {id:"0-4",color:"#9999aa",
-          customCSS:"animation:rotate 3s linear infinite;display:inline-block"},
-        {id:"2-7",color:"#ffcc44",fontWeight:"600",
-          customCSS:"animation:flicker 1s step-end infinite;display:inline-block"},
-        {id:"2-18",color:"#9999aa",
-          customCSS:"animation:rotate 3s linear infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1800,1800],next:"catacombe_b2_parser"},
-
-    "catacombe_b2_parser":{type:"parser",
-      prompt:"secondo livello — dove vai?",
-      failMessage:"non conosci questo posto abbastanza per tentarlo.",
-      lines:[""],
-      lineDelays:[400],
-      commands:[
-        {keywords:"nord,luce,luminoso,camera luce",match:"contains",next:"catacombe_camera_luce"},
-        {keywords:"ovest,spirale,iscrizioni,incisioni",match:"contains",next:"catacombe_camera_spirale"},
-        {keywords:"esamina,guarda,cerca,ispezione",match:"contains",next:"catacombe_b2_ispezione"},
-        {keywords:"torna,indietro,b1,primo livello",match:"contains",next:"catacombe_b1"},
-        {keywords:"golem,statua,guardia,sentinella",match:"contains",condType:"flag",condition:"dungeon_b2",next:"golem_area"}
-      ]},
-
-    "catacombe_b2_ispezione":{type:"text",
-      lines:[
-        "Le pareti mostrano figure incise.",
-        "Un cacciatore che porta tre oggetti verso una porta grande.",
-        "Sopra la porta: il simbolo dell'altare del tempio senza nome."
-      ],
-      wordStyles:[
-        {id:"1-1",color:"#aacc77",fontWeight:"600"}
-      ],
-      lineDelays:[1500,1600,1500],
-      next:"catacombe_b2_parser"},
-
-    "catacombe_camera_luce":{type:"effect",effect:"glitch",duration:500,next:"catacombe_luce_testo"},
-    "catacombe_luce_testo":{type:"text",
-      lines:[
-        "La camera è piena di luce bianca che non ha fonte.",
-        "Al centro: un piedistallo con qualcosa sopra.",
-        "Ti avvicini. La luce aumenta.",
-        "Poi capisci: la luce sei tu. Stai bruciando dall'interno."
-      ],
-      wordStyles:[
-        {id:"0-3",color:"#ffffff",fontWeight:"700",
-          customCSS:"animation:flicker 0.4s step-end infinite;display:inline-block"},
-        {id:"3-5",color:"#ff6644",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.3s ease-in-out infinite;display:inline-block"},
-        {id:"3-8",color:"#ff6644",fontWeight:"700",
-          customCSS:"animation:colorPulse 1s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1500,1400,1700],next:"catacombe_luce_scelta"},
-    "catacombe_luce_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"tocca il piedistallo",next:"catacombe_luce_tocca"},
-      {text:"esci dalla camera subito",next:"catacombe_b2_parser"}
-    ]},
-    "catacombe_luce_tocca":{type:"effect",effect:"flash",duration:800,next:"catacombe_luce_tocca_testo"},
-    "catacombe_luce_tocca_testo":{type:"text",
-      lines:[
-        "Sul piedistallo: cenere.",
-        "Solo cenere.",
-        "La luce si spegne.",
-        "Sei rimasto scottato per niente."
-      ],
-      lineDelays:[1300,1200,1300,1400],
-      mechChanges:[{mechId:"salute",delta:-15,mode:"add"},{mechId:"corruzione",delta:10,mode:"add"}],
-      next:"catacombe_b2_parser"},
-
-    "catacombe_camera_spirale":{type:"text",
-      lines:[
-        "La camera delle spirali.",
-        "Le incisioni sulle pareti si muovono se le guardi di traverso.",
-        "Al fondo: una reliquia. Riconoscibile dall'alone scuro attorno ad essa.",
-        "E davanti alla reliquia: il Golem di Cenere."
-      ],
-      wordStyles:[
-        {id:"1-4",color:"#9999aa",
-          customCSS:"animation:rotate 2s linear infinite;display:inline-block"},
-        {id:"2-2",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"3-4",color:"#667766",fontWeight:"600",
-          customCSS:"animation:vibrate 0.2s linear infinite;display:inline-block"},
-        {id:"3-5",color:"#667766",fontWeight:"600"}
-      ],
-      lineDelays:[1400,1700,1600,1500],next:"catacombe_spirale_scelta"},
-    "catacombe_spirale_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"combattere il Golem di Cenere",next:"golem_combattimento"},
-      {text:"usare il Marchio di Ash per comunicare",next:"golem_marchio",condition:"conosce_il_custode"},
-      {text:"tentare un aggiramento",next:"golem_aggira"}
-    ]},
-
-    "golem_aggira":{type:"minigame",subtype:"orbit",rounds:5,difficulty:2,winThreshold:3,winNext:"golem_aggirato",loseNext:"golem_bloccato"},
-    "golem_aggirato":{type:"text",
-      lines:[
-        "Il Golem reagisce a una soglia di percezione.",
-        "Riesci a strisciare oltre senza attraversarla.",
-        "La reliquia è a portata di mano."
-      ],
-      lineDelays:[1500,1500,1300],next:"reliquia_a_presa"},
-    "golem_bloccato":{type:"text",
-      lines:[
-        "Il Golem sente il movimento.",
-        "Si gira.",
-        "Il confronto è inevitabile."
-      ],
-      wordStyles:[
-        {id:"2-5",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:shakeIntense 0.4s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1400,1200,1300],next:"golem_combattimento"},
-
-    "golem_marchio":{type:"text",
-      lines:[
-        "Mostri la pergamena del Marchio di Ash.",
-        "Il Golem si immobilizza.",
-        "Per tre secondi completi.",
-        "Poi si fa da parte."
-      ],
-      wordStyles:[
-        {id:"1-1",color:"#667766",fontWeight:"600"},
-        {id:"3-4",color:"#aacc77",fontWeight:"700",effect:"pulse"}
-      ],
-      lineDelays:[1500,1600,1200,1300],next:"reliquia_a_presa"},
-
-    "golem_combattimento":{type:"combat",npcId:"golem",
-      npcHp:60,npcAttack:{min:10,max:18},npcDefense:8,npcHitChance:65,
-      playerHpMech:"salute",
-      actions:[
-        {label:"colpisci le giunture",dmgMin:12,dmgMax:18,hitChance:70,
-          hitText:"Le giunture cedono. Il movimento rallenta.",
-          missText:"La pietra cenere assorbe il colpo senza reagire."},
-        {label:"usa la lama antica",dmgMin:20,dmgMax:28,hitChance:75,
-          hitText:"L'acciaio antico taglia la cenere compressa. Danni seri.",
-          missText:"La lama rimbalza sull'involucro più duro.",
-          requireItem:"⚔"},
-        {label:"colpisci il nucleo luminoso",dmgMin:28,dmgMax:38,hitChance:55,
-          hitText:"Il nucleo si incrina. Il Golem perde stabilità.",
-          missText:"Il nucleo si sposta prima dell'impatto."},
-        {label:"ritirati al secondo piano",flee:true,fleeChance:55}
-      ],
-      winNext:"golem_sconfitto_testo",loseNext:"golem_ti_colpisce"},
-
-    "golem_sconfitto_testo":{type:"text",
-      lines:[
-        "Il Golem si disintegra.",
-        "Non esplode — si sgretola, piano, come se si ricordasse di essere polvere.",
-        "Lascia cadere qualcosa."
-      ],
-      wordStyles:[
-        {id:"1-5",color:"#999988",
-          customCSS:"animation:fadeInOut 1.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1700,1400],next:"golem_loot"},
-    "golem_loot":{type:"inventory",action:"add",item:"⚪",
-      itemName:"Nucleo del Golem",
-      itemDescription:"Pietra di cenere compressa. Ancora calda. Può essere usata come chiave o come proiettile.",
-      itemRarity:"rare",
-      itemModifiers:[{mechId:"forza",op:"add",value:12}],
-      next:"golem_flag"},
-    "golem_flag":{type:"setflag",flag:"golem_sconfitto",value:true,next:"reliquia_a_presa"},
-
-    "golem_ti_colpisce":{type:"text",
-      lines:[
-        "Il Golem ti colpisce con un braccio largo come un tronco.",
-        "Il muro arresta la traiettoria.",
-        "Sei ancora in piedi. Appena."
-      ],
-      lineDelays:[1500,1400,1300],
-      mechChanges:[{mechId:"salute",delta:-30,mode:"add"},{mechId:"corruzione",delta:10,mode:"add"}],
-      next:"catacombe_b2_parser"},
-
-    "reliquia_a_presa":{type:"effect",effect:"flash",duration:600,next:"reliquia_a_testo"},
-    "reliquia_a_testo":{type:"text",
-      lines:[
-        "La Prima Reliquia.",
-        "Un frammento di pietra nera, caldo, con un simbolo che riconosci adesso.",
-        "È lo stesso dell'altare nel tempio.",
-        "È lo stesso del sigillo del Cancello di Ash."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"0-2",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"3-8",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"3-9",color:"#cc7700",fontWeight:"600"},
-        {id:"3-10",color:"#cc7700",fontWeight:"600"}
-      ],
-      lineDelays:[1400,1700,1500,1600],next:"reliquia_a_inv"},
-    "reliquia_a_inv":{type:"inventory",action:"add",item:"🔴",
-      itemName:"Prima Reliquia — Frammento del Cancello",
-      itemDescription:"Pietra nera. Calda. Uno dei tre frammenti necessari a sigillare il Cancello di Ash.",
-      itemRarity:"legendary",
-      itemModifiers:[{mechId:"forza",op:"add",value:15}],
-      next:"reliquia_a_flag"},
-    "reliquia_a_flag":{type:"setflag",flag:"reliquia_a",value:true,next:"catacombe_b3_discesa"},
-
-    "catacombe_b3_discesa":{type:"checkpoint",next:"catacombe_b3_testo"},
-    "catacombe_b3_testo":{type:"text",
-      lines:[
-        "Terzo livello. Il Custode è qui.",
-        "Lo sai perché l'aria cambia. Diventa pesante. Direzionale.",
-        "Come se qualcosa stesse respirando verso di te."
-      ],
-      wordStyles:[
-        {id:"0-2",color:"#8855cc",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.8s ease-in-out infinite;display:inline-block"},
-        {id:"1-5",color:"#9977aa"},
-        {id:"2-4",color:"#9977aa",fontWeight:"600",
-          customCSS:"animation:breathe 2s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1700,1500],next:"custode_incontro"},
-
-    "custode_incontro":{type:"character",npcId:"custode",
-      lines:[
-        "— 'Cacciatore.'",
-        "— 'Sei arrivato fin qui.'",
-        "— 'Porteresti la Prima Reliquia fuori da queste catacombe?'",
-        "— 'Allora devi passare da me.'"
-      ],
-      wordStyles:[
-        {id:"2-3",color:"#aacc77",fontWeight:"600",effect:"pulse"},
-        {id:"2-4",color:"#aacc77"}
-      ],
-      lineDelays:[1200,1400,1600,1400],next:"custode_scelta"},
-
-    "custode_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"combattere il Custode",next:"custode_combattimento"},
-      {text:"mostrare il Marchio di Ash",next:"custode_marchio",condition:"conosce_il_custode"},
-      {text:"'So perché sei qui'",next:"custode_dialogo",condition:"conosce_ash"},
-      {text:"negoziare",next:"custode_negozia"}
-    ]},
-
-    "custode_marchio":{type:"text",
-      lines:[
-        "Il Custode guarda la pergamena.",
-        "Tre secondi di silenzio.",
-        "— 'Il simbolo del Costruttore.'",
-        "— 'Non portavi questo quando sei entrato tre anni fa.'",
-        "Si fa da parte.",
-        "— 'Passa. Ma ricorda: la Reliquia non è tua. La stai prendendo in prestito.'"
-      ],
-      wordStyles:[
-        {id:"3-8",color:"#cc9944",fontWeight:"600"},
-        {id:"5-11",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:pulse 1.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1400,1400,1700,1100,1700],next:"custode_lascia_passare"},
-
-    "custode_dialogo":{type:"character",npcId:"custode",
-      lines:[
-        "— 'Allora sai che il Cancello ha una memoria.'",
-        "— 'Sai che ricorda il tuo nome.'",
-        "— 'Quello che non sai ancora: il Cancello vuole che tu torni.'",
-        "— 'Non per punizione. Per completamento.'",
-        "— 'Hai lasciato qualcosa dentro. Tre anni fa.'"
-      ],
-      wordStyles:[
-        {id:"2-8",color:"#cc7700",fontWeight:"600",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"4-5",color:"#cc9944",fontWeight:"600",
-          customCSS:"animation:glow 2s ease-in-out infinite"}
-      ],
-      lineDelays:[1600,1500,1700,1500,1600],next:"custode_lascia_passare"},
-
-    "custode_negozia":{type:"character",npcId:"custode",
-      lines:[
-        "— 'Non ho interesse nei tuoi beni.'",
-        "— 'L'unica cosa che accetto è il riconoscimento.'",
-        "— 'Riconosci di aver aperto il Cancello.'",
-        "— 'Di tua volontà. Con piena consapevolezza.'",
-        "— 'O combattiamo.'"
-      ],
-      lineDelays:[1400,1500,1500,1500,1200],next:"custode_riconosce_scelta"},
-    "custode_riconosce_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"'Sì. Ero io. L'ho aperto io.'",next:"custode_riconosce"},
-      {text:"combattere",next:"custode_combattimento"}
-    ]},
-    "custode_riconosce":{type:"character",npcId:"custode",
-      lines:[
-        "— 'Bene.'",
-        "— 'Il Cancello lo sa già. Ma dovevi dirlo anche tu.'",
-        "Si fa da parte.",
-        "— 'La Seconda Reliquia è nella Torre di Brek. L'Accordo la chiama: Manufatto 7.'",
-        "— 'Buona fortuna.'"
-      ],
-      wordStyles:[
-        {id:"3-7",color:"#aabbcc",fontWeight:"600"},
-        {id:"3-8",color:"#aabbcc"}
-      ],
-      lineDelays:[1200,1500,1100,1700,1200],next:"custode_lascia_passare"},
-
-    "custode_combattimento":{type:"combat",npcId:"custode",
-      npcHp:80,npcAttack:{min:15,max:25},npcDefense:10,npcHitChance:80,
-      playerHpMech:"salute",
-      actions:[
-        {label:"attacco rapido",dmgMin:10,dmgMax:18,hitChance:70,
-          hitText:"Il colpo connette. Il Custode è solido ma non invulnerabile.",
-          missText:"Blocca senza sembrar faticare."},
-        {label:"usa la lama antica",dmgMin:20,dmgMax:30,hitChance:72,
-          hitText:"L'acciaio antico è più efficace del normale contro questo tipo.",
-          missText:"Schiva. Per qualcosa della sua taglia, è troppo veloce.",
-          requireItem:"⚔"},
-        {label:"usa il nucleo del Golem come arma",dmgMin:25,dmgMax:38,hitChance:65,
-          hitText:"Il nucleo reagisce alla presenza del Custode. Danni amplificati.",
-          missText:"Il Custode riconosce il nucleo. Evita l'impatto.",
-          requireItem:"⚪"},
-        {label:"indietreggia",flee:true,fleeChance:40}
-      ],
-      winNext:"custode_sconfitto_testo",loseNext:"custode_ti_sconfigge"},
-
-    "custode_sconfitto_testo":{type:"text",
-      lines:[
-        "Il Custode cade su un ginocchio.",
-        "— 'Bene. Non mi succedeva.'",
-        "— 'Vai. La Reliquia è tua. Per ora.'"
-      ],
-      wordStyles:[
-        {id:"1-6",color:"#8855cc",fontWeight:"600",
-          customCSS:"animation:fadeInOut 2s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1500,1400],next:"custode_flag"},
-    "custode_flag":{type:"setflag",flag:"custode_sconfitto",value:true,next:"custode_lascia_passare"},
-
-    "custode_ti_sconfigge":{type:"text",
-      lines:[
-        "Il Custode ti mette al muro.",
-        "Letteralmente.",
-        "— 'Torna quando sei pronto.'",
-        "Ti ritrovi fuori dalle Catacombe. Non sai come ci sei arrivato."
-      ],
-      lineDelays:[1400,1100,1400,1600],
-      mechChanges:[{mechId:"salute",delta:-40,mode:"add"},{mechId:"corruzione",delta:15,mode:"add"}],
-      next:"distretto"},
-
-    "custode_lascia_passare":{type:"text",
-      lines:[
-        "Esci dalle Catacombe con la Prima Reliquia.",
-        "La luce del giorno fa quasi male.",
-        "Hai ancora due reliquie da trovare. E probabilmente meno di sei giorni."
-      ],
-      wordStyles:[
-        {id:"0-4",color:"#aacc77",fontWeight:"600",effect:"pulse"},
-        {id:"0-5",color:"#aacc77",fontWeight:"600"},
-        {id:"2-9",color:"#ffffff",fontWeight:"700",
-          customCSS:"animation:flicker 0.7s step-end infinite;display:inline-block"}
-      ],
-      lineDelays:[1600,1500,1700],
-      mechChanges:[{mechId:"reputazione",delta:15,mode:"add"}],
-      next:"dopo_catacombe"},
-
-    "dopo_catacombe":{type:"checkpoint",next:"dopo_catacombe_testo"},
-    "dopo_catacombe_testo":{type:"text",
-      lines:[
-        "Di ritorno al Distretto delle Ceneri.",
-        "Ryn ti aspetta fuori dalla Fiamma Stanca. Ovviamente."
-      ],
-      wordStyles:[{id:"1-0",color:"#7a9966",fontWeight:"600",effect:"pulse"}],
-      lineDelays:[1500,1500],next:"ryn_dopo_catacombe"},
-
-    "ryn_dopo_catacombe":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Sei vivo. Bene.'",
-        "— 'E hai la Reliquia. Meglio.'",
-        "— 'Ho notizie sulla Terza. È a Dralheim. Sotto di noi. Nelle fondamenta vecchie.'",
-        "— 'Ma prima: la Torre di Brek per la Seconda. Ho un contatto lì.'",
-        "— 'Un membro dell'Accordo che non ama l'Accordo quanto dovrbbe.'",
-        "— 'Si chiama Merek. Non fidarti completamente di lui.'"
-      ],
-      wordStyles:[
-        {id:"2-5",color:"#aacc77",effect:"pulse",fontWeight:"600"},
-        {id:"2-6",color:"#aacc77"},
-        {id:"3-7",color:"#aabbcc",fontWeight:"600"},
-        {id:"3-8",color:"#aabbcc"},
-        {id:"5-2",color:"#aabbcc",fontWeight:"600"}
-      ],
-      lineDelays:[1300,1400,1700,1700,1500,1500],next:"hub_mondo_2"},
-
-    // ══════════════════════════════════════════════
-    //  HUB 2 — DRALHEIM DOPO LE CATACOMBE
-    // ══════════════════════════════════════════════
-    "hub_mondo_2":{type:"checkpoint",next:"hub_mondo_2_testo"},
-    "hub_mondo_2_testo":{type:"text",
-      lines:[
-        "Hai la Prima Reliquia.",
-        "Due da trovare. Poco tempo.",
-        "Il Distretto delle Ceneri ti è familiare adesso. O così sembra."
-      ],
-      wordStyles:[
-        {id:"0-2",color:"#aacc77",fontWeight:"600",effect:"pulse"},
-        {id:"0-3",color:"#aacc77"},
-        {id:"0-4",color:"#aacc77"}
-      ],
-      lineDelays:[1400,1300,1500],
-      choices:[
-        {text:"partire per la Torre di Brek",next:"torre_brek_partenza"},
-        {text:"tornare da Vorn per equipaggiamento",next:"vorn_negozio"},
-        {text:"tornare da Sael per informazioni",next:"tempio_entrata"},
-        {text:"tornare da Oren",next:"oren_mercato"},
-        {text:"cercare la Terza Reliquia nelle fondamenta",next:"fondamenta_entrata",condition:"reliquia_a"}
-      ]},
-
-    // ── TORRE DI BREK ──
-    "torre_brek_partenza":{type:"text",
-      lines:[
-        "La Torre di Brek è a tre ore di cammino a nord.",
-        "L'Accordo la usa come deposito di manufatti confiscati.",
-        "Confiscati a chi, e da dove, sono domande che l'Accordo preferisce non rispondere."
-      ],
-      wordStyles:[
-        {id:"0-2",color:"#aabbcc",fontWeight:"600"},
-        {id:"0-3",color:"#aabbcc"}
-      ],
-      lineDelays:[1600,1600,1700],next:"torre_brek_arrivo"},
-
-    "torre_brek_arrivo":{type:"text",
-      lines:[
-        "La Torre di Brek. Alta, grigia, con guardie ai cancelli.",
-        "Un uomo ti aspetta fuori dalla porta di servizio.",
-        "— 'Sei il contatto di Ryn? Vieni.'",
-        "— 'Veloci. Cambio guardia tra venti minuti.'"
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#aabbcc",fontWeight:"600"},
-        {id:"0-2",color:"#aabbcc"}
-      ],
-      lineDelays:[1600,1500,1400,1400],next:"torre_timer"},
-
-    "torre_timer":{type:"timer",seconds:25,tapToSkip:true,
-      message:"Venti minuti per trovare il Manufatto 7 prima del cambio guardia.",
-      timeoutNext:"torre_catturato",tapNext:"torre_dentro"},
-
-    "torre_dentro":{type:"parser",
-      prompt:"sei dentro la Torre. cosa cerchi?",
-      failMessage:"non c'è niente di utile in quella direzione.",
-      lines:[
-        "Corridoi di pietra. Scaffali con oggetti numerati.",
-        "Merek ti indica un percorso con la testa."
-      ],
-      lineDelays:[1600,1400],
-      commands:[
-        {keywords:"manufatto,sette,7,reliquia,cerca",match:"contains",next:"torre_trova_manufatto"},
-        {keywords:"esamina,guarda,scaffali,intorno",match:"contains",next:"torre_ispezione"},
-        {keywords:"parla,merek,chiedi,informazioni",match:"contains",next:"torre_merek_parla"},
-        {keywords:"prendi,ruba,altro,saccheggia",match:"contains",next:"torre_prende_altro"},
-        {keywords:"esci,vai,fuga,scappa",match:"contains",next:"torre_fuga_successo"}
-      ]},
-
-    "torre_ispezione":{type:"text",
-      lines:[
-        "Centinaia di oggetti. Tutto numerato, niente etichettato.",
-        "Vedi: una spada rotta con un'incisione familiare, un libro sigillato, tre statue di pietra nera.",
-        "E in fondo: una teca di vetro con dentro qualcosa che pulsa."
-      ],
-      wordStyles:[
-        {id:"2-6",color:"#9966cc",fontWeight:"600",
-          customCSS:"animation:pulse 1.5s ease-in-out infinite;display:inline-block"},
-        {id:"2-7",color:"#9966cc"}
-      ],
-      lineDelays:[1600,1700,1600],next:"torre_dentro"},
-
-    "torre_merek_parla":{type:"text",
-      lines:[
-        "Merek sussurra: — 'Teca di vetro, fondo sala, scaffale 7.'",
-        "— 'È sotto blocco di contenimento. Ti serve questo.'",
-        "Ti passa una chiave.",
-        "— 'E fai in fretta. Non sono pagato abbastanza per rischiare più di questo.'"
-      ],
-      lineDelays:[1600,1500,1200,1500],next:"torre_dentro"},
-
-    "torre_trova_manufatto":{type:"minigame",subtype:"slider",rounds:4,difficulty:2,winThreshold:3,winNext:"torre_manufatto_preso",loseNext:"torre_allarme"},
-
-    "torre_manufatto_preso":{type:"text",
-      lines:[
-        "Il blocco di contenimento si apre.",
-        "La Seconda Reliquia.",
-        "Uguale alla prima ma verde scuro. Trema nella tua mano."
-      ],
-      wordStyles:[
-        {id:"1-1",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"1-2",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"2-5",color:"#66aa66",fontWeight:"600",
-          customCSS:"animation:vibrate 0.2s linear infinite;display:inline-block"}
-      ],
-      lineDelays:[1400,1500,1500],next:"torre_manufatto_inv"},
-    "torre_manufatto_inv":{type:"inventory",action:"add",item:"🟢",
-      itemName:"Seconda Reliquia — Frammento del Cancello",
-      itemDescription:"Pietra verde scuro. Trema leggermente. Secondo dei tre frammenti.",
-      itemRarity:"legendary",
-      itemModifiers:[{mechId:"forza",op:"add",value:15}],
-      next:"reliquia_b_flag"},
-    "reliquia_b_flag":{type:"setflag",flag:"reliquia_b",value:true,next:"torre_fuga_successo"},
-
-    "torre_prende_altro":{type:"text",
-      lines:[
-        "Noti un sacchetto di pelle su uno scaffale basso. Pesante.",
-        "Dentro: 35 monete d'argento e un registro delle confische.",
-        "Il registro ha nomi che riconosci. Il tuo è il terzo."
-      ],
-      wordStyles:[
-        {id:"2-6",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1600,1600],
-      mechChanges:[{mechId:"monete",delta:35,mode:"add"}],
-      next:"torre_dentro"},
-
-    "torre_allarme":{type:"effect",effect:"shake",duration:700,next:"torre_allarme_testo"},
-    "torre_allarme_testo":{type:"text",
-      lines:[
-        "Il blocco di contenimento scatta.",
-        "Allarme. Tre guardie nel corridoio.",
-        "Merek sparisce nella direzione opposta."
-      ],
-      lineDelays:[1400,1400,1300],next:"torre_combattimento_fuga"},
-    "torre_combattimento_fuga":{type:"minigame",subtype:"mole",rounds:6,difficulty:3,winThreshold:4,winNext:"torre_fuga_successo",loseNext:"torre_catturato"},
-
-    "torre_fuga_successo":{type:"text",
-      lines:[
-        "Fuori dalla Torre.",
-        "Merek non si vede. Probabilmente meglio così.",
-        "Hai quello che ti serviva."
-      ],
-      lineDelays:[1400,1500,1300],
-      mechChanges:[{mechId:"reputazione",delta:10,mode:"add"}],
-      next:"torre_ritorno"},
-
-    "torre_catturato":{type:"text",
-      lines:[
-        "Le guardie ti bloccano nel corridoio.",
-        "L'interrogazione dell'Accordo dura quattro ore.",
-        "Ti rilasciano con una multa e la promessa di conseguenze future.",
-        "La Reliquia è rimasta nella teca."
-      ],
-      lineDelays:[1500,1600,1600,1500],
-      mechChanges:[{mechId:"monete",delta:-20,mode:"add"},{mechId:"reputazione",delta:-15,mode:"add"}],
-      next:"hub_mondo_2"},
-
-    "torre_ritorno":{type:"checkpoint",next:"torre_ritorno_testo"},
-    "torre_ritorno_testo":{type:"text",
-      lines:[
-        "Di ritorno a Dralheim con due Reliquie.",
-        "Ryn ti aspetta. Hai la sensazione che aspetti sempre."
-      ],
-      lineDelays:[1500,1500],next:"ryn_dopo_torre"},
-
-    "ryn_dopo_torre":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Due. Bene.'",
-        "— 'La Terza è qui sotto.'",
-        "— 'Nelle fondamenta del quartiere vecchio c'è una camera che non è sulle mappe.'",
-        "— 'Ci ho messo tre mesi a trovarla. Tienitela cara.'",
-        "Tira fuori un appunto con un indirizzo.",
-        "— 'Sotto la bottega del conciatore. C'è una porta senza maniglia. Lo sai cosa fare.'"
-      ],
-      wordStyles:[
-        {id:"1-5",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"1-6",color:"#aacc77",fontWeight:"700"},
-        {id:"5-4",color:"#884422"}
-      ],
-      lineDelays:[1300,1500,1700,1600,1400,1700],next:"hub_mondo_3"},
-
-    // ── FONDAMENTA ──
-    "fondamenta_entrata":{type:"checkpoint",next:"fondamenta_testo"},
-    "fondamenta_testo":{type:"text",
-      lines:[
-        "Le fondamenta del quartiere vecchio.",
-        "La porta senza maniglia è lì dove Ryn ha detto.",
-        "Sai cosa fare: il simbolo dell'altare del tempio. Lo stesso delle Catacombe."
-      ],
-      wordStyles:[
-        {id:"1-6",color:"#884422"},
-        {id:"2-7",color:"#6688aa",fontWeight:"600"}
-      ],
-      lineDelays:[1500,1600,1700],next:"fondamenta_azione"},
-    "fondamenta_azione":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"tracciare il simbolo sulla porta",next:"fondamenta_apre"},
-      {text:"forzare la porta",next:"fondamenta_forza"}
-    ]},
-    "fondamenta_apre":{type:"effect",effect:"flash",duration:500,next:"fondamenta_dentro"},
-    "fondamenta_forza":{type:"minigame",subtype:"slider",rounds:3,difficulty:3,winThreshold:2,winNext:"fondamenta_dentro",loseNext:"fondamenta_forza_fallisce"},
-    "fondamenta_forza_fallisce":{type:"text",
-      lines:["La porta non si muove.","Il simbolo è l'unico modo.","Devi aver visto il simbolo da qualche parte."],
-      lineDelays:[1400,1400,1500],next:"fondamenta_entrata"},
-
-    "fondamenta_dentro":{type:"text",
-      lines:[
-        "Dentro: una camera circolare.",
-        "Al centro: un piedistallo con la Terza Reliquia.",
-        "Intorno al piedistallo: sei figure in pietra. Cavalieri, dall'aspetto.",
-        "Le figure hanno i volti cancellati. Come le statue nel tempio."
-      ],
-      wordStyles:[
-        {id:"1-4",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"1-5",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"3-7",color:"#888899",
-          customCSS:"animation:flicker 2s step-end infinite;display:inline-block"},
-        {id:"3-8",color:"#888899",fontWeight:"600"}
-      ],
-      lineDelays:[1400,1500,1700,1600],next:"fondamenta_scelta"},
-    "fondamenta_scelta":{type:"text",lines:[""],lineDelays:[400],choices:[
-      {text:"prendere la Terza Reliquia",next:"fondamenta_prende"},
-      {text:"esaminare le figure prima",next:"fondamenta_esamina"}
-    ]},
-    "fondamenta_esamina":{type:"text",
-      lines:[
-        "Sei cavalieri. Identici nell'armatura.",
-        "Sui petti: lo stesso simbolo. Il costruttore delle Catacombe.",
-        "Uno regge qualcosa tra le mani. Un libro. Fatto di pietra.",
-        "Dentro il libro: una sola riga incisa.",
-        "— 'Chi porta tre frammenti porta anche il prezzo.'"
-      ],
-      wordStyles:[
-        {id:"1-1",color:"#cc9944",fontWeight:"600"},
-        {id:"4-9",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:pulse 1.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1500,1600,1600,1500,1700],next:"prezzo_flag"},
-    "prezzo_flag":{type:"setflag",flag:"conosce_il_prezzo",value:true,next:"fondamenta_prende"},
-
-    "fondamenta_prende":{type:"effect",effect:"glitch",duration:600,next:"fondamenta_reliqui_testo"},
-    "fondamenta_reliqui_testo":{type:"text",
-      lines:[
-        "Le sei figure si muovono.",
-        "Non attaccano.",
-        "Si inchinano."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#888899",fontWeight:"600",
-          customCSS:"animation:vibrate 0.15s linear infinite;display:inline-block"},
-        {id:"0-2",color:"#888899"}
-      ],
-      lineDelays:[1600,1400,1500],next:"reliquia_c_inv"},
-    "reliquia_c_inv":{type:"inventory",action:"add",item:"🔵",
-      itemName:"Terza Reliquia — Frammento del Cancello",
-      itemDescription:"Pietra blu notte. Fredda. Terzo e ultimo frammento.",
-      itemRarity:"legendary",
-      itemModifiers:[{mechId:"forza",op:"add",value:15}],
-      next:"reliquia_c_flag"},
-    "reliquia_c_flag":{type:"setflag",flag:"reliquia_c",value:true,next:"hub_mondo_3"},
-
-    "hub_mondo_3":{type:"checkpoint",next:"hub_mondo_3_check"},
-    "hub_mondo_3_check":{type:"condition",flag:"reliquia_c",trueNext:"tre_reliquie_ready",falseNext:"hub_mondo_3_manca"},
-    "hub_mondo_3_manca":{type:"text",
-      lines:["Hai ancora reliquie da trovare."],lineDelays:[1400],
-      choices:[
-        {text:"Torre di Brek — Seconda Reliquia",next:"torre_brek_partenza",condition:"!reliquia_b"},
-        {text:"Fondamenta — Terza Reliquia",next:"fondamenta_entrata",condition:"!reliquia_c"},
-        {text:"tornare ai negozi",next:"distretto"}
-      ]},
-
-    "tre_reliquie_ready":{type:"text",
-      lines:[
-        "Tre Reliquie.",
-        "Tutte e tre.",
-        "Il Cancello di Ash si apre tra poco.",
-        "O lo chiudi tu prima. O lo chiude qualcos'altro."
-      ],
-      wordStyles:[
-        {id:"0-0",color:"#aacc77",fontWeight:"700"},
-        {id:"0-1",color:"#aacc77",fontWeight:"700",effect:"pulse"},
-        {id:"0-2",color:"#aacc77",fontWeight:"700"},
-        {id:"2-1",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"2-2",color:"#cc7700",fontWeight:"600"},
-        {id:"2-3",color:"#cc7700",fontWeight:"600"}
-      ],
-      lineDelays:[1400,1400,1600,1500],next:"ryn_finale"},
-
-    "ryn_finale":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Le hai tutte e tre. Non ci credevo del tutto.'",
-        "— 'Il Cancello è alla Porta delle Ceneri, lato est.'",
-        "— 'Porta le tre Reliquie ai tre sigilli. Nell'ordine giusto.'",
-        "— 'Non nell'ordine sbagliato. Ho visto cosa succede nell'ordine sbagliato.'",
-        "Pausa lunga.",
-        "— 'Buona fortuna. E torna.'"
-      ],
-      wordStyles:[
-        {id:"3-9",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:shakeIntense 0.4s ease-in-out infinite;display:inline-block"},
-        {id:"3-10",color:"#cc4444"}
-      ],
-      lineDelays:[1600,1700,1700,1700,1300,1500],next:"finale"},
-
-    // ══════════════════════════════════════════════
-    //  ATTO 3 — IL CANCELLO
-    // ══════════════════════════════════════════════
-    "finale":{type:"checkpoint",next:"cancello_testo"},
-
-    "cancello_testo":{type:"text",
-      lines:[
-        "Il Cancello di Ash è reale.",
-        "Non una metafora. Non un simbolo. Una porta larga venti metri fatta di osso calcificato.",
-        "Tre serrature. Hai due reliquie su tre.",
-        "Dall'altro lato: qualcosa che bussa."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"0-2",color:"#cc7700",fontWeight:"600"},
-        {id:"0-3",color:"#cc7700",fontWeight:"600"},
-        {id:"1-8",color:"#887766",fontWeight:"600"},
-        {id:"1-11",color:"#887766",
-          customCSS:"animation:vibrate 0.2s linear infinite;display:inline-block"},
-        {id:"3-4",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.3s ease-in-out infinite;display:inline-block"},
-        {id:"3-5",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.3s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1700,2000,1600,1800],next:"cancello_scelta"},
-
-    "cancello_scelta":{type:"text",lines:["Tre sigilli. Tre Reliquie."],lineDelays:[1400],choices:[
-      {text:"sigillare il Cancello — usare le tre Reliquie",next:"finale_sigilla_check"},
-      {text:"aprire il Cancello completamente",next:"finale_apre_check"},
-      {text:"chiamare Ryn prima di decidere",next:"finale_chiama_ryn",condition:"ryn_si_fida"},
-      {text:"chiamare Oren — sa qualcosa",next:"finale_chiama_oren",condition:"oren_si_fida"}
-    ]},
-
-    "finale_chiama_ryn":{type:"character",npcId:"ryn",
-      lines:[
-        "— 'Sei qui. Bene.'",
-        "— 'Sigillarlo ferma la perdita. Dralheim smette di corrompersi.'",
-        "— 'Aprirlo... non lo so. Nessuno sa cosa c'è dentro davvero.'",
-        "— 'Tre anni fa eri entrato da questa parte. Sei uscito senza memoria di cosa hai visto.'",
-        "— 'Questa è la risposta alla tua domanda.'"
-      ],
-      wordStyles:[
-        {id:"3-8",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:pulse 1.5s ease-in-out infinite;display:inline-block"}
-      ],
-      lineDelays:[1400,1700,1600,1800,1600],next:"cancello_scelta"},
-
-    "finale_chiama_oren":{type:"character",npcId:"oren",
-      lines:[
-        "— 'Tre anni fa ero abbastanza vicino da sentire cosa hai detto.'",
-        "— 'Non era una formula. Era un nome.'",
-        "— 'Il nome di qualcuno che volevi salvare.'",
-        "Si ferma.",
-        "— 'Quella persona è dall'altro lato. Questo è quello che bussa.'",
-        "— 'Aprirlo la libera. Sigillarlo la lascia dentro per sempre.'"
-      ],
-      wordStyles:[
-        {id:"1-5",color:"#ddcc88",fontWeight:"600",
-          customCSS:"animation:glow 2s ease-in-out infinite"},
-        {id:"4-4",color:"#cc4444",fontWeight:"700",
-          customCSS:"animation:shakeIntense 0.4s ease-in-out infinite;display:inline-block"},
-        {id:"5-1",color:"#aacc77",effect:"pulse"},
-        {id:"5-9",color:"#cc4444",effect:"pulse"}
-      ],
-      lineDelays:[1700,1600,1600,1100,1700,1700],next:"cancello_scelta"},
-
-    "finale_sigilla_check":{type:"condition",flag:"reliquia_c",trueNext:"finale_sigilla",falseNext:"finale_manca_terza"},
-    "finale_manca_terza":{type:"text",
-      lines:["Ti manca la Terza Reliquia.","Non puoi sigillare senza tutte e tre."],
-      lineDelays:[1500,1400],next:"cancello_scelta"},
-
-    "finale_apre_check":{type:"condition",flag:"conosce_il_prezzo",trueNext:"finale_apre",falseNext:"finale_apre_ignaro"},
-    "finale_apre_ignaro":{type:"text",
-      lines:[
-        "Non sai ancora il prezzo dell'apertura.",
-        "Una voce — non da fuori. Da dentro di te.",
-        "— 'Leggi prima. Poi decidi.'"
-      ],
-      wordStyles:[{id:"2-0",color:"#cc4444",fontWeight:"600"}],
-      lineDelays:[1500,1600,1400],next:"cancello_scelta"},
-
-    "finale_sigilla":{type:"minigame",subtype:"orbit",rounds:7,difficulty:3,winThreshold:5,winNext:"finale_sigillato_ok",loseNext:"finale_sigilla_fallisce"},
-    "finale_sigillato_ok":{type:"effect",effect:"flash",duration:800,next:"finale_sigillato_flag"},
-    "finale_sigillato_flag":{type:"setflag",flag:"cancello_sigillato",value:true,next:"ending_sigillato"},
-    "finale_sigilla_fallisce":{type:"text",
-      lines:["Il terzo sigillo resiste.","Devi riprovare."],
-      lineDelays:[1500,1400],
-      mechChanges:[{mechId:"salute",delta:-10,mode:"add"}],next:"cancello_scelta"},
-
-    "finale_apre":{type:"minigame",subtype:"sequence",rounds:6,difficulty:3,winThreshold:4,winNext:"finale_aperto_ok",loseNext:"finale_apre_fallisce"},
-    "finale_aperto_ok":{type:"effect",effect:"glitch",duration:900,next:"finale_aperto_flag"},
-    "finale_aperto_flag":{type:"setflag",flag:"cancello_aperto",value:true,next:"ending_aperto"},
-    "finale_apre_fallisce":{type:"text",
-      lines:["La sequenza si interrompe.","Il Cancello vibra.","Riprova."],
-      lineDelays:[1400,1400,1100],
-      mechChanges:[{mechId:"corruzione",delta:10,mode:"add"}],next:"cancello_scelta"},
-
-    // ══════════════════════════════════════════════
-    //  TRIGGER AUTOMATICI
-    // ══════════════════════════════════════════════
-    "corruzione_cede":{type:"effect",effect:"glitch",duration:1200,next:"corruzione_cede_testo"},
-    "corruzione_cede_testo":{type:"text",
-      lines:[
-        "La corruzione da Cenere ha raggiunto il limite.",
-        "Non è dolore. È perdita di perimetro.",
-        "Non sai più dove finisce il Cancello e dove inizi tu.",
-        "Poi: un punto fermo. Il rumore smette.",
-        "Corruzione: ridotta. Qualcosa altro: aumentato."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc4444",fontWeight:"600"},
-        {id:"2-4",color:"#8855cc",fontWeight:"700",
-          customCSS:"animation:glitchRGB 1.5s ease-in-out infinite;display:inline-block"},
-        {id:"2-9",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"}
-      ],
-      lineDelays:[1700,1600,1800,1500,1500],
-      mechChanges:[{mechId:"corruzione",delta:-30,mode:"add"},{mechId:"salute",delta:-15,mode:"add"}],
-      next:"distretto"},
-
-    "morte":{type:"effect",effect:"glitch",duration:1400,next:"morte_testo"},
-    "morte_testo":{type:"text",
-      lines:[
-        "La salute finisce.",
-        "Non in modo drammatico.",
-        "Semplicemente finisce.",
-        "Dralheim ti rigurgita da qualche parte che riconosci.",
-        "Più debole. Ancora intero."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc4444",fontWeight:"700"},
-        {id:"3-0",color:"#ffaa33",fontWeight:"600",effect:"glow"},
-        {id:"3-1",color:"#cc9944"}
-      ],
-      lineDelays:[1600,1500,1500,1700,1500],
-      mechChanges:[{mechId:"salute",delta:35,mode:"add"},{mechId:"corruzione",delta:15,mode:"add"}],
-      next:"distretto"},
-
-    "reputazione_alta":{type:"text",
-      lines:[
-        "La parola si è sparsa.",
-        "Hai la Prima Reliquia. Hai battuto la Bestia del Pozzo.",
-        "I mercanti ti fanno prezzi leggermente migliori.",
-        "Non molto. Ma qualcosa."
-      ],
-      wordStyles:[
-        {id:"1-5",color:"#aacc77",fontWeight:"600"}
-      ],
-      lineDelays:[1500,1600,1500,1200],
-      mechChanges:[{mechId:"monete",delta:10,mode:"add"}],
-      next:"distretto"},
-
-    "reputazione_zero":{type:"text",
-      lines:[
-        "Hai bruciato troppi ponti a Dralheim.",
-        "I negozi chiudono prima che tu arrivi.",
-        "Ryn ti manda un messaggio scritto invece di aspettarti.",
-        "— 'Finisci il lavoro. Poi magari parliamo.'"
-      ],
-      lineDelays:[1600,1500,1500,1400],next:"distretto"},
-
-    // ══════════════════════════════════════════════
-    //  FINALI
-    // ══════════════════════════════════════════════
-    "ending_sigillato":{type:"ending",
-      lines:[
-        "Il Cancello si chiude.",
-        "Non con un rumore.",
-        "Con l'assenza di quel bussare che senti da tre anni nel fondo del cranio.",
-        "Dralheim smette di corrompersi nel giro di settimane.",
-        "Ryn ti trova fuori dal Cancello.",
-        "— 'Fatto.'",
-        "— 'Adesso va al Pronto Soccorso.'"
-      ],
-      wordStyles:[
-        {id:"2-10",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"4-0",color:"#7a9966",fontWeight:"600",effect:"pulse"}
-      ],
-      lineDelays:[1600,1500,1900,1700,1600,1200,1400],
-      title:"il cancello, sigillato",color:"#88aa77"},
-
-    "ending_aperto":{type:"ending",
-      lines:[
-        "Il Cancello si apre completamente.",
-        "La persona che bussava esce.",
-        "Non la riconosci subito.",
-        "Poi sì.",
-        "Tre anni fa hai aperto un Cancello per salvarla.",
-        "Lei ti guarda.",
-        "— 'Ci hai messo un po'.'",
-        "— 'Ma sei arrivato.'"
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"4-7",color:"#cc9944",fontWeight:"600",effect:"glow"},
-        {id:"4-8",color:"#cc9944",fontWeight:"600"}
-      ],
-      lineDelays:[1700,1600,1600,1200,1800,1500,1600,1300],
-      title:"il cancello, aperto",color:"#7788bb"},
-
-    "ending_incompleto":{type:"ending",
-      lines:[
-        "Il tempo scade.",
-        "Il Cancello di Ash si apre da solo.",
-        "Quello che esce non è quello che bussava.",
-        "Dralheim avrà un problema nuovo.",
-        "Più grande del vecchio.",
-        "Tu sei ancora qui.",
-        "Per ora."
-      ],
-      wordStyles:[
-        {id:"1-1",color:"#cc7700",fontWeight:"700"},
-        {id:"1-2",color:"#cc7700",fontWeight:"600"},
-        {id:"1-3",color:"#cc7700",fontWeight:"600"},
-        {id:"1-7",color:"#cc4444",fontWeight:"600",
-          customCSS:"animation:shakeIntense 0.5s ease-in-out infinite;display:inline-block"},
-        {id:"1-8",color:"#cc4444"}
-      ],
-      lineDelays:[1500,1700,1700,1600,1400,1500,1300],
-      title:"tempo scaduto",color:"#887755"},
-
-    "ending_corrotto":{type:"ending",
-      lines:[
-        "La corruzione vince prima del Cancello.",
-        "Non sei più sicuro di essere la stessa persona che è entrata a Dralheim.",
-        "Il Cancello ti riconosce comunque.",
-        "— 'Benvenuto. Di nuovo.'",
-        "Non capisci cosa significa.",
-        "Probabilmente è meglio così."
-      ],
-      wordStyles:[
-        {id:"0-1",color:"#8855cc",fontWeight:"600"},
-        {id:"2-0",color:"#cc7700",fontWeight:"700",
-          customCSS:"animation:neonPulse 2s ease-in-out infinite;display:inline-block;color:#cc8800"},
-        {id:"3-0",color:"#554466"}
-      ],
-      lineDelays:[1700,1800,1600,1500,1500,1400],
-      title:"corrotto",color:"#554466"}
+    "start":{type:"text",lines:[""],choices:[]}
   }
 };
 
@@ -7743,9 +6002,18 @@ const NODE_TYPES=[
     const sp   = document.getElementById('edSplitter');
     const nl   = document.getElementById('edNodeList');
     const body = document.getElementById('edBody');
+    const btnL = document.getElementById('splitLockLeft');
+    const btnR = document.getElementById('splitLockRight');
     if(!sp||!nl||!body) return;
 
     function isPortrait(){ return window.innerWidth < window.innerHeight; }
+
+    // Debounced FC.refresh to avoid lag during drag
+    let _refreshRaf = null;
+    function deferRefresh(){
+      if(_refreshRaf) return;
+      _refreshRaf = requestAnimationFrame(()=>{ _refreshRaf=null; FC.refresh(); });
+    }
 
     // Restore saved size
     function restoreSize(){
@@ -7755,52 +6023,84 @@ const NODE_TYPES=[
         const v = parseInt(saved);
         nl.style.width = Math.max(0, Math.min(window.innerWidth-40, v))+'px';
       } else {
-        if(isPortrait()) nl.style.width = Math.round(window.innerWidth * 0.38) + 'px';
+        if(isPortrait()) nl.style.width = Math.round(window.innerWidth * 0.42) + 'px';
         else             nl.style.width = '260px';
       }
       setTimeout(()=>FC.refresh(), 30);
     }
 
     restoreSize();
-    window.addEventListener('orientationchange',()=>{ setTimeout(restoreSize,100); });
-    window.addEventListener('resize', ()=>{ setTimeout(restoreSize, 100); });
+    window.addEventListener('orientationchange',()=>{ setTimeout(restoreSize,150); });
+    window.addEventListener('resize', ()=>{ setTimeout(restoreSize, 150); });
 
-    let dragging=false, startX=0, startY=0, startW=0, startH=0;
+    // ── Lock buttons ──
+    function lockLeft(){
+      // Show only map (full width left panel)
+      const bodyW = body.offsetWidth;
+      nl.style.transition = 'width 0.2s ease';
+      nl.style.width = (bodyW - 20) + 'px';
+      sp.style.display = '';
+      setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
+      localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', bodyW - 20);
+      btnL.classList.add('sp-locked'); btnR.classList.remove('sp-locked');
+    }
+    function lockRight(){
+      // Show only detail (collapse map to 0)
+      nl.style.transition = 'width 0.2s ease';
+      nl.style.width = '0px';
+      setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
+      localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', 0);
+      btnR.classList.add('sp-locked'); btnL.classList.remove('sp-locked');
+    }
+    function unlockBtns(){ btnL.classList.remove('sp-locked'); btnR.classList.remove('sp-locked'); }
+
+    if(btnL) btnL.addEventListener('click', e=>{ e.stopPropagation(); lockLeft(); });
+    if(btnR) btnR.addEventListener('click', e=>{ e.stopPropagation(); lockRight(); });
+
+    // ── Drag ──
+    let dragging=false, startX=0, startW=0;
 
     sp.addEventListener('pointerdown', e=>{
+      if(e.target === btnL || e.target === btnR) return;
       e.preventDefault();
       sp.setPointerCapture(e.pointerId);
       dragging=true; sp.classList.add('sp-active');
-      startX=e.clientX; startY=e.clientY;
-      startW=nl.offsetWidth; startH=nl.offsetHeight;
+      startX=e.clientX;
+      startW=nl.offsetWidth;
+      unlockBtns();
     });
     sp.addEventListener('pointermove', e=>{
       if(!dragging) return;
-      const dx=e.clientX-startX, bodyW=body.offsetWidth;
-      const nw=Math.max(0, Math.min(bodyW-40, startW+dx));
-      nl.style.width=nw+'px';
-      FC.refresh();
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const bodyW = body.offsetWidth;
+      const nw = Math.max(0, Math.min(bodyW - 20, startW + dx));
+      nl.style.width = nw + 'px';
+      deferRefresh(); // one RAF per frame, no jank
     });
     function onUp(){
       if(!dragging) return;
       dragging=false; sp.classList.remove('sp-active');
-      const k=isPortrait()?'_fc_split_v':'_fc_split_h';
+      const k = isPortrait()?'_fc_split_v':'_fc_split_h';
       localStorage.setItem(k, nl.offsetWidth);
-      FC.refresh();
+      deferRefresh();
     }
     sp.addEventListener('pointerup', onUp);
     sp.addEventListener('pointercancel', onUp);
 
-    // Double-tap splitter: collapse/expand graph
+    // Double-tap splitter: toggle collapse
     let _lastTap=0;
-    sp.addEventListener('pointerup', ()=>{
+    sp.addEventListener('pointerup', e=>{
+      if(e.target === btnL || e.target === btnR) return;
       const now=Date.now();
-      if(now-_lastTap < 350){
-        const k=isPortrait()?'_fc_split_v':'_fc_split_h';
+      if(now-_lastTap < 380){
         const cur=nl.offsetWidth, bodyW=body.offsetWidth;
-        nl.style.width=(cur>20?'0px':Math.round(bodyW*(isPortrait()?0.38:0.4))+'px');
-        setTimeout(()=>FC.refresh(),30);
-        localStorage.setItem(k, nl.offsetWidth);
+        const target = cur > 20 ? 0 : Math.round(bodyW*(isPortrait()?0.42:0.4));
+        nl.style.transition='width 0.2s ease';
+        nl.style.width = target + 'px';
+        setTimeout(()=>{ nl.style.transition=''; deferRefresh(); }, 220);
+        localStorage.setItem(isPortrait()?'_fc_split_v':'_fc_split_h', target);
+        unlockBtns();
       }
       _lastTap=now;
     });
@@ -7826,6 +6126,8 @@ const FC = (function(){
   let filterStr='';
   let menu=null;
   let ready=false;
+  let _drawPending=false;
+  function scheduleDraw(){ if(_drawPending)return; _drawPending=true; requestAnimationFrame(()=>{ _drawPending=false; draw(); }); }
 
   function pos(){ return currentStory._fcPositions||(currentStory._fcPositions={}); }
 
@@ -8381,25 +6683,36 @@ const FC = (function(){
       if(id){
         saveSettingsIfOpen();if(selectedNodeId)saveCurrentNode(selectedNodeId);
         selectedNodeId=id;selConn=null;renderNodeDetail(id);
-        drag={id,sx:cx,sy:cy,ox:pos()[id].x,oy:pos()[id].y};draw();return;
+        drag={id,sx:cx,sy:cy,ox:pos()[id].x,oy:pos()[id].y,moved:false};draw();return;
       }
       // Click on connection?
       const cn=connAt(cx,cy);
       if(cn){selConn=cn;draw();return;}
       selConn=null;
-      pan={sx:cx,sy:cy,ox,oy};draw();
+      // On mobile use a small dead zone before committing to pan
+      pan={sx:cx,sy:cy,ox,oy,pending:window._LE_DEVICE==='mobile'};draw();
     });
 
     canvas.addEventListener('pointermove',e=>{
       e.preventDefault();const[cx,cy]=getEvtPos(e);
-      if(conn){conn.mx=cx;conn.my=cy;draw();return;}
+      if(conn){conn.mx=cx;conn.my=cy;scheduleDraw();return;}
       if(drag){
         const dx=(cx-drag.sx)/sc,dy=(cy-drag.sy)/sc;
+        // Small dead zone so a tap doesn't accidentally move the node
+        if(!drag.moved && Math.hypot(cx-drag.sx, cy-drag.sy) < 6) return;
+        drag.moved=true;
         if(!currentStory._fcPositions)currentStory._fcPositions={};
         currentStory._fcPositions[drag.id]={x:drag.ox+dx,y:drag.oy+dy};
-        draw();return;
+        scheduleDraw();return;
       }
-      if(pan){ox=pan.ox+(cx-pan.sx);oy=pan.oy+(cy-pan.sy);draw();return;}
+      if(pan){
+        // Activate pan only after moving past dead zone (mobile)
+        if(pan.pending){
+          if(Math.hypot(cx-pan.sx, cy-pan.sy) < 8) return;
+          pan.pending=false;
+        }
+        ox=pan.ox+(cx-pan.sx);oy=pan.oy+(cy-pan.sy);scheduleDraw();return;
+      }
       const id=nodeAt(cx,cy);
       const cn=!id?connAt(cx,cy):null;
       canvas.style.cursor=id?(onHandle(id,cx,cy)?'crosshair':'grab'):cn?'pointer':'default';
