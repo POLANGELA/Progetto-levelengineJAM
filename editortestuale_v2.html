@@ -2425,6 +2425,7 @@ body.mobile-mode .ef-label{
       <button class="ed-tool-btn warn" id="tbReset">↺ Reset</button>
       <button class="ed-tool-btn" id="tbExport" style="color:var(--blue)">📦 Esporta</button>
       <button class="ed-tool-btn" id="tbChangeDevice" title="Cambia dispositivo" style="color:var(--text-dim)">mob/desk</button>
+      <button class="ed-tool-btn" id="tbTutorial" style="color:#7c6fff;border-color:rgba(124,111,255,.3);background:rgba(124,111,255,.07)">✦ guida</button>
     </div>
     <div id="edBody">
       <div id="edNodeList">
@@ -13925,6 +13926,326 @@ async function autoLoad(){
 
 window.addEventListener('beforeunload', ()=>autoSave(true));
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') autoSave(true); });
+
+/* ── TUTORIAL COACH v6 ── */
+;(function(){
+
+const DONE_KEY = '_le_tut5';
+const C = '#7c6fff';
+let _alive = false, _step = 0, _timers = [], _popup = null, _arrow = null, _currentCleanup = null;
+
+const STEPS = [
+
+  {
+    auto: false,
+    msg: `<b>Guida rapida — Level Engine</b><br><br>
+          Questo pannello ti accompagna nei primi passi.<br>
+          L'editor resta completamente utilizzabile.<br><br>
+          Quando un passo richiede un'azione, il pulsante
+          "avanti" si disabilita finché non la compi.`,
+    point: null, side: null,
+    watch(){ return ()=>{}; }
+  },
+
+  {
+    auto: true,
+    msg: `<b>Creare un nodo</b><br><br>
+          Una storia è una rete di nodi collegati tra loro.<br>
+          Ogni nodo è una scena, un dialogo, una scelta.<br><br>
+          Premi <b>＋ Nodo</b> nella barra in alto per aprire
+          il pannello di creazione.`,
+    point: 'tbAddNode', side: 'below',
+    watch(next){
+      const el = document.getElementById('tbAddNode');
+      function h(){ next(); }
+      el?.addEventListener('click', h, {once:true});
+      return ()=> el?.removeEventListener('click', h);
+    }
+  },
+
+  {
+    auto: true,
+    msg: `<b>Tipo di nodo: Testo</b><br><br>
+          Ogni nodo ha un tipo che ne definisce il comportamento.<br>
+          Il tipo <b style="color:#70d4a8">Testo</b> mostra una sequenza di frasi
+          al giocatore e può portare a scelte multiple.<br><br>
+          Selezionalo dalla griglia.`,
+    point: null, side: null,
+    watch(next){
+      function h(e){
+        const card = e.target.closest('.node-type-card');
+        if(card && card.dataset.ntype === 'text') next();
+      }
+      document.addEventListener('click', h);
+      return ()=> document.removeEventListener('click', h);
+    }
+  },
+
+  {
+    auto: true,
+    msg: `<b>ID del nodo</b><br><br>
+          Ogni nodo ha un identificatore univoco usato
+          internamente per i collegamenti.<br><br>
+          Scrivi un nome senza spazi nel campo ID:<br>
+          <code>inizio</code> &nbsp;·&nbsp; <code>scena_1</code> &nbsp;·&nbsp; <code>bosco</code><br><br>
+          Poi premi <b style="color:#56d18a">✓ Crea nodo</b>.`,
+    point: 'newNodeId', side: 'above',
+    watch(next){
+      function h(e){
+        if(e.target.id === 'confirmAddNode'){
+          setTimeout(()=>{ if(document.getElementById('nf-lines')) next(); }, 400);
+        }
+      }
+      document.addEventListener('click', h);
+      return ()=> document.removeEventListener('click', h);
+    }
+  },
+
+  {
+    auto: false,
+    msg: `<b>Frasi del nodo</b><br><br>
+          Questo campo contiene il testo che apparirà nel gioco.
+          Scrivi una frase per riga — vengono mostrate in sequenza,
+          con una pausa tra l'una e l'altra.<br><br>
+          Il campo "pausa dopo ogni frase" permette di controllare
+          il ritmo in millisecondi.`,
+    point: 'nf-lines', side: 'left',
+    watch(){ return ()=>{}; }
+  },
+
+  {
+    auto: false,
+    msg: `<b>Aspetto del testo</b><br><br>
+          Scorrendo il pannello trovi la sezione <b>aspetto testo</b>.<br><br>
+          Da lì puoi cambiare colore, allineamento e font
+          per l'intero nodo. Cliccando su una singola riga
+          nell'elenco si apre invece l'editor per quella frase specifica,
+          dove puoi impostare posizione, dimensione e stile individuale.`,
+    point: null, side: null,
+    watch(){ return ()=>{}; }
+  },
+
+  {
+    auto: false,
+    msg: `<b>Immagine di sfondo</b><br><br>
+          Nella sezione <b>immagine + posizionamento</b> puoi
+          caricare un'immagine di sfondo per il nodo.<br><br>
+          La griglia 3×3 determina dove compare il blocco di testo
+          rispetto all'immagine. Il pulsante "editor visivo"
+          apre una vista a schermo intero per posizionare
+          testo e immagine trascinandoli direttamente.`,
+    point: null, side: null,
+    watch(){ return ()=>{}; }
+  },
+
+  {
+    auto: true,
+    msg: `<b>Testare la storia</b><br><br>
+          Il pulsante <b>▶ Testa</b> avvia il gioco dal nodo
+          di inizio, così puoi vedere il risultato mentre lavori.<br><br>
+          Per tornare all'editor usa il tab <b>Editor</b> in alto.`,
+    point: 'tbPlay', side: 'below',
+    watch(next){
+      const el = document.getElementById('tbPlay');
+      function h(){ next(); }
+      el?.addEventListener('click', h, {once:true});
+      return ()=> el?.removeEventListener('click', h);
+    }
+  },
+
+  {
+    auto: false,
+    done: true,
+    msg: `<b>Fine della guida</b><br><br>
+          Hai visto come creare un nodo, scrivere il testo,
+          impostarne l'aspetto e testare il risultato.<br><br>
+          Per i passi successivi — collegare i nodi, aggiungere
+          scelte, meccaniche e personaggi — la guida verrà
+          ampliata nelle prossime sessioni.<br><br>
+          Puoi riaprire questo pannello in qualsiasi momento
+          dal pulsante <b style="color:${C}">✦ guida</b>.`,
+    point: null, side: null,
+    watch(){ return ()=>{}; }
+  },
+];
+
+function _cleanupCurrent(){
+  if(_currentCleanup){ try{_currentCleanup();}catch(e){} _currentCleanup=null; }
+}
+
+function _css(){
+  if(document.getElementById('_tc_css')) return;
+  const s=document.createElement('style'); s.id='_tc_css';
+  s.textContent=`
+  #_tc{position:fixed;z-index:88888;max-width:290px;width:calc(100vw - 24px);
+    background:#0d0d15;border:1.5px solid rgba(124,111,255,.45);border-radius:10px;
+    padding:16px 18px 13px;
+    box-shadow:0 6px 28px rgba(0,0,0,.8),0 0 0 1px rgba(124,111,255,.08);
+    font-family:'Inter',system-ui,sans-serif;font-size:12.5px;line-height:1.75;
+    color:#8888a0;pointer-events:auto;
+    transition:opacity .22s,transform .22s;}
+  #_tc b{color:#d8d8ee;font-weight:600}
+  #_tc code{background:rgba(124,111,255,.16);color:#a89fff;padding:1px 5px;
+    border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+  #_tc_bar{display:flex;align-items:center;gap:6px;margin-top:14px}
+  #_tc_x{background:none;border:1px solid #222230;color:#33334a;
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;
+    padding:4px 9px;cursor:pointer;border-radius:4px;text-transform:uppercase;
+    transition:color .15s,border-color .15s}
+  #_tc_x:hover{color:#666;border-color:#444}
+  #_tc_next{margin-left:auto;background:rgba(124,111,255,.13);
+    border:1px solid rgba(124,111,255,.38);color:#9a90ee;
+    font-family:'Inter',system-ui,sans-serif;font-size:12px;font-weight:500;
+    padding:5px 14px;cursor:pointer;border-radius:6px;white-space:nowrap;
+    transition:background .15s,color .15s}
+  #_tc_next:hover{background:rgba(124,111,255,.24);color:#bbb8ff}
+  #_tc_next:disabled{opacity:.28;cursor:default;pointer-events:none}
+  #_tc_dots{display:flex;gap:4px;align-items:center}
+  .tcd{height:4px;border-radius:2px;transition:width .3s,background .3s}
+  #_tc_hint{font-size:9px;color:rgba(124,111,255,.4);letter-spacing:.1em;
+    text-transform:uppercase;margin-top:8px;min-height:12px}
+  #_tc_arr{position:fixed;z-index:88887;pointer-events:none;
+    filter:drop-shadow(0 0 4px rgba(124,111,255,.45))}
+  @keyframes _bob_d{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  @keyframes _bob_u{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes _bob_r{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+  @keyframes _bob_l{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
+  `;
+  document.head.appendChild(s);
+}
+
+function _svg(dir){
+  const c=C,r='round';
+  return {
+    down:`<svg width="22" height="32" viewBox="0 0 22 32" fill="none"><line x1="11" y1="2" x2="11" y2="24" stroke="${c}" stroke-width="2" stroke-linecap="${r}"/><polyline points="3,16 11,28 19,16" stroke="${c}" stroke-width="2" stroke-linecap="${r}" stroke-linejoin="${r}" fill="none"/><circle cx="11" cy="28" r="2" fill="${c}"/></svg>`,
+    up:  `<svg width="22" height="32" viewBox="0 0 22 32" fill="none"><line x1="11" y1="30" x2="11" y2="8" stroke="${c}" stroke-width="2" stroke-linecap="${r}"/><polyline points="3,16 11,4 19,16" stroke="${c}" stroke-width="2" stroke-linecap="${r}" stroke-linejoin="${r}" fill="none"/><circle cx="11" cy="4" r="2" fill="${c}"/></svg>`,
+    right:`<svg width="32" height="22" viewBox="0 0 32 22" fill="none"><line x1="2" y1="11" x2="24" y2="11" stroke="${c}" stroke-width="2" stroke-linecap="${r}"/><polyline points="16,3 28,11 16,19" stroke="${c}" stroke-width="2" stroke-linecap="${r}" stroke-linejoin="${r}" fill="none"/><circle cx="28" cy="11" r="2" fill="${c}"/></svg>`,
+    left:`<svg width="32" height="22" viewBox="0 0 32 22" fill="none"><line x1="30" y1="11" x2="8" y2="11" stroke="${c}" stroke-width="2" stroke-linecap="${r}"/><polyline points="16,3 4,11 16,19" stroke="${c}" stroke-width="2" stroke-linecap="${r}" stroke-linejoin="${r}" fill="none"/><circle cx="4" cy="11" r="2" fill="${c}"/></svg>`,
+  }[dir]||'';
+}
+
+function _place(step){
+  if(!_popup||!_alive) return;
+  const W=window.innerWidth,H=window.innerHeight;
+  const pw=Math.min(290,W-24);
+  _popup.style.maxWidth=pw+'px';
+  const target=step.point?document.getElementById(step.point):null;
+  if(!target){
+    _arrow.style.display='none';
+    _popup.style.left=Math.max(8,(W-pw)/2)+'px';
+    _popup.style.bottom='14px'; _popup.style.top='auto';
+    return;
+  }
+  _arrow.style.display='block';
+  const tr=target.getBoundingClientRect();
+  const ph=_popup.offsetHeight||190;
+  const G=10,AR=28,side=step.side||'below';
+  let px,py,ax,ay,adir;
+  if(side==='below'){
+    px=Math.max(8,Math.min(tr.left+tr.width/2-pw/2,W-pw-8));
+    py=tr.top-ph-AR-G; if(py<8) py=tr.bottom+AR+G;
+    ax=tr.left+tr.width/2-11; ay=tr.top-AR; adir='down';
+  } else if(side==='above'){
+    px=Math.max(8,Math.min(tr.left+tr.width/2-pw/2,W-pw-8));
+    py=tr.bottom+AR+G; if(py+ph>H-8) py=tr.top-ph-AR-G;
+    ax=tr.left+tr.width/2-11; ay=tr.bottom+2; adir='up';
+  } else if(side==='left'){
+    px=tr.right+AR+G; if(px+pw>W-8) px=tr.left-pw-AR-G;
+    py=Math.max(8,Math.min(tr.top+tr.height/2-ph/2,H-ph-8));
+    ax=tr.right+2; ay=tr.top+tr.height/2-11; adir='right';
+  } else {
+    px=tr.left-pw-AR-G; if(px<8) px=tr.right+AR+G;
+    py=Math.max(8,Math.min(tr.top+tr.height/2-ph/2,H-ph-8));
+    ax=tr.left-AR-2; ay=tr.top+tr.height/2-11; adir='left';
+  }
+  _popup.style.left=px+'px'; _popup.style.top=py+'px'; _popup.style.bottom='auto';
+  _arrow.innerHTML=_svg(adir); _arrow.style.left=ax+'px'; _arrow.style.top=ay+'px';
+  _arrow.style.animation=`${{down:'_bob_d',up:'_bob_u',right:'_bob_r',left:'_bob_l'}[adir]} 1s ease-in-out infinite`;
+}
+
+function _render(){
+  if(!_popup||!_alive) return;
+  const step=STEPS[_step];
+  _popup.querySelector('#_tc_msg').innerHTML=step.msg;
+  _popup.querySelector('#_tc_dots').innerHTML=STEPS.map((s,i)=>{
+    const a=i===_step,d=i<_step;
+    return `<div class="tcd" style="width:${a?14:4}px;background:${a?C:d?'rgba(124,111,255,.35)':'#1e1e2a'}"></div>`;
+  }).join('');
+  const btn=_popup.querySelector('#_tc_next');
+  btn.disabled=step.auto;
+  btn.textContent=step.done?'chiudi':step.auto?'in attesa...':'avanti →';
+  _popup.querySelector('#_tc_hint').textContent=step.auto?'esegui l\'azione indicata per continuare':'';
+  _place(step);
+}
+
+function _advance(){
+  if(!_alive) return;
+  _cleanupCurrent(); _step++;
+  if(_step>=STEPS.length){ tutEnd(); return; }
+  _render();
+  _currentCleanup=STEPS[_step].watch(()=>{ if(_alive) _advance(); });
+}
+
+function _build(){
+  if(document.getElementById('_tc')) return;
+  _popup=document.createElement('div'); _popup.id='_tc';
+  _popup.innerHTML=`
+    <div id="_tc_msg"></div>
+    <div id="_tc_hint"></div>
+    <div id="_tc_bar">
+      <div id="_tc_dots"></div>
+      <button id="_tc_x">✕ chiudi</button>
+      <button id="_tc_next">avanti →</button>
+    </div>`;
+  document.body.appendChild(_popup);
+  _popup.querySelector('#_tc_x').addEventListener('click', tutEnd);
+  _popup.querySelector('#_tc_next').addEventListener('click',()=>{
+    if(STEPS[_step]?.done){ tutEnd(); return; }
+    if(!STEPS[_step]?.auto) _advance();
+  });
+  _arrow=document.createElement('div'); _arrow.id='_tc_arr';
+  document.body.appendChild(_arrow);
+}
+
+function tutStart(){
+  if(_alive) tutEnd();
+  _css(); _build();
+  _step=0; _alive=true;
+  _popup.style.opacity='0'; _popup.style.transform='translateY(5px)';
+  requestAnimationFrame(()=>{
+    _popup.style.opacity='1'; _popup.style.transform='translateY(0)';
+    _render();
+    _currentCleanup=STEPS[0].watch(()=>{ if(_alive) _advance(); });
+  });
+}
+
+function tutEnd(){
+  _alive=false; _cleanupCurrent();
+  _timers.forEach(t=>clearTimeout(t)); _timers=[];
+  if(_popup){
+    _popup.style.opacity='0'; _popup.style.transform='translateY(5px)';
+    setTimeout(()=>{
+      _popup?.parentNode?.removeChild(_popup);
+      _arrow?.parentNode?.removeChild(_arrow);
+      _popup=null; _arrow=null;
+    },250);
+  }
+  try{ localStorage.setItem(DONE_KEY,'1'); }catch(e){}
+}
+
+window.tutStart=tutStart; window.tutEnd=tutEnd;
+window.tutReset=function(){ try{localStorage.removeItem(DONE_KEY);}catch(e){}; tutStart(); };
+
+function _hook(){ document.getElementById('tbTutorial')?.addEventListener('click',window.tutReset); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_hook); else _hook();
+
+(function(){
+  let done=false; try{done=localStorage.getItem(DONE_KEY)==='1';}catch(e){}
+  if(done) return;
+  (function _try(){ document.getElementById('tbAddNode')?setTimeout(tutStart,900):setTimeout(_try,200); })();
+})();
+
+})();
 
 window.addEventListener('resize',()=>{
   if(bgAnimId){
