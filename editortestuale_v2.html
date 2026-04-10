@@ -4823,7 +4823,7 @@ async function runNode(nodeId){
       }
 
       case 'effect':{
-        triggerEffect(node.effect||'shake', node.duration||500);
+        if(node.effect) triggerEffect(node.effect, node.duration||500);
         if(node.statChanges){
           if(node.statChanges.tension!=null) gameVars.tension=clamp(gameVars.tension+(node.statChanges.tension||0),0,100);
           if(node.statChanges.health!=null)  gameVars.health=clamp(gameVars.health+(node.statChanges.health||0),0,100);
@@ -7526,6 +7526,7 @@ function renderNodeDetail(nodeId){
         <div class="ef-group-title">effetto visivo</div>
         <div class="ef-label">tipo effetto</div>
         <select class="ef-select" id="nf-effect">
+          <option value="" ${!node.effect||node.effect===''?'selected':''}>— nessuno —</option>
           ${['glitch','shake','flash','dim','red','blue'].map(e=>`<option value="${e}" ${node.effect===e?'selected':''}>${e}</option>`).join('')}
         </select>
         <div class="ef-label">durata (ms)</div>
@@ -8688,7 +8689,7 @@ function attachDetailEvents(nodeId){
     }
     if(newType==='inventory'){ if(!n.action) n.action='add'; }
     if(newType==='effect'){
-      if(!n.effect) n.effect='shake';
+      if(!n.effect && n.effect !== '') n.effect='shake';
       if(!n.duration) n.duration=500;
     }
     if(newType==='media'){
@@ -13660,9 +13661,10 @@ document.addEventListener('change', function(e){
 // ═══════════════════════════════════════════════════
 const SAVE_KEY        = 'vuoto_engine_autosave';
 const IDB_NAME        = 'vuoto_engine_db';
-const IDB_VERSION     = 2;
-const IDB_STORE_MEDIA = 'mediaAssets';
-const IDB_STORE_AUDIO = 'audioAssets';
+const IDB_VERSION     = 3;
+const IDB_STORE_MEDIA  = 'mediaAssets';
+const IDB_STORE_AUDIO  = 'audioAssets';
+const IDB_STORE_SPRITES = 'spriteAssets';
 let _saveTimer = null;
 let _idb = null; // istanza del database IndexedDB
 
@@ -13677,6 +13679,8 @@ function _openIDB(){
         db.createObjectStore(IDB_STORE_MEDIA, { keyPath: 'id' });
       if(!db.objectStoreNames.contains(IDB_STORE_AUDIO))
         db.createObjectStore(IDB_STORE_AUDIO, { keyPath: 'id' });
+      if(!db.objectStoreNames.contains(IDB_STORE_SPRITES))
+        db.createObjectStore(IDB_STORE_SPRITES, { keyPath: 'id' });
     };
     req.onsuccess = (e) => { _idb = e.target.result; resolve(_idb); };
     req.onerror   = (e) => reject(e.target.error);
@@ -13787,6 +13791,61 @@ async function loadMediaAssets(){
   } catch(e){ console.warn('[loadMediaAssets]', e); }
 }
 
+
+// ── Salva sprite NPC in IndexedDB
+function saveSpriteAssets(){
+  if(!window.spriteAssets) return;
+  const promises = [];
+  for(const [id, asset] of Object.entries(window.spriteAssets)){
+    const blob = asset.blob;
+    if(!blob || !(blob instanceof Blob)) continue;
+    promises.push(
+      _idbPut(IDB_STORE_SPRITES, {
+        id,
+        blob,
+        type: blob.type || 'image/png',
+        name: asset.name || id,
+        npcId: asset.npcId || null,
+        width: asset.width || 0,
+        height: asset.height || 0
+      }).catch(e => console.warn('[saveSpriteAssets] idb error', id, e))
+    );
+  }
+  return Promise.all(promises);
+}
+
+// ── Carica sprite NPC da IndexedDB
+async function loadSpriteAssets(){
+  try {
+    const records = await _idbGetAll(IDB_STORE_SPRITES);
+    if(!window.spriteAssets) window.spriteAssets = {};
+    for(const rec of records){
+      const blob = rec.blob;
+      if(!blob) continue;
+      // Se lo spriteId esiste già in memoria con un blob valido, salta
+      if(window.spriteAssets[rec.id] && window.spriteAssets[rec.id].blob) continue;
+      const blobUrl = URL.createObjectURL(blob);
+      window.spriteAssets[rec.id] = {
+        blob,
+        url: blobUrl,
+        width: rec.width || 0,
+        height: rec.height || 0,
+        name: rec.name,
+        npcId: rec.npcId
+      };
+      // Ripristina spriteUrl nell'NPC corrispondente
+      const npcId = rec.npcId;
+      if(npcId && currentStory.npcs && currentStory.npcs[npcId]){
+        const npc = currentStory.npcs[npcId];
+        if(!npc.spriteUrl || npc.spriteUrl.startsWith('blob:') || npc.spriteId === rec.id){
+          npc.spriteId = rec.id;
+          npc.spriteUrl = blobUrl;
+        }
+      }
+    }
+  } catch(e){ console.warn('[loadSpriteAssets]', e); }
+}
+
 // ── Salva audio assets in IndexedDB
 function saveAudioAssets(){
   if(!window.audioAssets) return;
@@ -13843,6 +13902,7 @@ function _doSave(){
     // Salva media/audio in IndexedDB (asincrono, nessun limite pratico)
     saveAudioAssets();
     saveMediaAssets();
+    saveSpriteAssets();
     // Salva la storia JSON in localStorage (solo testo, nessun binario inline)
     const exportData = prepareStoryForExport();
     // Rimuovi eventuali data URI inline prima di salvare in localStorage
@@ -13887,6 +13947,7 @@ async function autoLoad(){
         // Carica i binari da IndexedDB (asincrono)
         await loadAudioAssets();
         await loadMediaAssets();
+        await loadSpriteAssets();
         restoreSpritesForEditor(currentStory);
         return true;
       }
