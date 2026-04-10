@@ -7530,15 +7530,7 @@ function renderNodeDetail(nodeId){
         <input class="ef-input" id="nf-message" value="${esc(node.message||'')}" placeholder="testo da mostrare durante l'effetto">
         <div class="ef-hint">lascia vuoto per nessun testo</div>
       </div>
-      <div class="ef-group">
-        <div class="ef-group-title">cambiamenti statistiche</div>
-        <div class="ef-row">
-          <div><div class="ef-label">tensione Δ</div><input class="ef-input" id="nf-stat-tension" type="number" value="${node.statChanges?.tension||0}" placeholder="0"></div>
-          <div><div class="ef-label">salute Δ</div><input class="ef-input" id="nf-stat-health" type="number" value="${node.statChanges?.health||0}" placeholder="0"></div>
-          <div><div class="ef-label">fiducia Δ</div><input class="ef-input" id="nf-stat-trust" type="number" value="${node.statChanges?.trust||0}" placeholder="0"></div>
-        </div>
-        <div class="ef-hint">valori positivi aumentano, negativi diminuiscono. si attivano se la HUD è abilitata</div>
-      </div>
+
       ${mechs.length ? `
       <div class="ef-group">
         <div class="ef-group-title">⚙ modifica meccaniche</div>
@@ -10351,10 +10343,6 @@ function saveCurrentNode(nodeId){
   const effect=$('nf-effect');if(effect)node.effect=effect.value;
   const duration=$('nf-duration');if(duration)node.duration=parseInt(duration.value)||500;
   const message=$('nf-message');if(message)node.message=message.value||undefined;
-  const stTension=$('nf-stat-tension');const stHealth=$('nf-stat-health');const stTrust=$('nf-stat-trust');
-  if(stTension||stHealth||stTrust){
-    node.statChanges={tension:parseInt(stTension?.value)||0,health:parseInt(stHealth?.value)||0,trust:parseInt(stTrust?.value)||0};
-  }
 
   // SetFlag
   const flagSel=$('nf-flag');if(flagSel)node.flag=flagSel.value||undefined;
@@ -11981,7 +11969,6 @@ function saveSettingsIfOpen(){
   // customFont data is saved live on upload; preserve it here
   s2.showHud=showHudEl.value==='true';
   const invSizeEl=$('sf-inv-size');if(invSizeEl)s2.invIconSize=Math.min(64,Math.max(16,parseInt(invSizeEl.value)||28));
-  s2.hudStats=['tension','health','trust'].filter(stat=>$(`sf-hud-${stat}`)?.checked);
   // Splash fields
   const splashEnabledEl=$('sf-splash-enabled');if(splashEnabledEl)s2.splashEnabled=splashEnabledEl.value==='true';
   const splashTitleEl=$('sf-splash-title');if(splashTitleEl)s2.splashTitle=splashTitleEl.value||currentStory.title;
@@ -12061,22 +12048,7 @@ $('tbSettings').addEventListener('click',()=>{
         </div>
       </div>
     </div>
-    <div class="ef-group">
-      <div class="ef-group-title">HUD statistiche</div>
-      <div class="ef-label">mostra HUD</div>
-      <select class="ef-select" id="sf-showhud">
-        <option value="true" ${s.showHud?'selected':''}>sì</option>
-        <option value="false" ${!s.showHud?'selected':''}>no</option>
-      </select>
-      <div class="ef-label" style="margin-top:8px">statistiche visibili</div>
-      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-        ${['tension','health','trust'].map(stat=>`
-          <label style="display:flex;align-items:center;gap:6px;font-size:9px;color:#555;letter-spacing:0.2em;cursor:pointer">
-            <input type="checkbox" id="sf-hud-${stat}" ${(s.hudStats||[]).includes(stat)?'checked':''} style="accent-color:#556655">
-            ${stat==='tension'?'tensione':stat==='health'?'salute':'fiducia'}
-          </label>`).join('')}
-      </div>
-    </div>
+
     <div class="ef-group">
       <div class="ef-group-title">⚑ gestione flag</div>
       <div style="font-size:8px;color:#444;letter-spacing:0.15em;margin-bottom:10px;line-height:1.8">i flag sono variabili booleane che tracciano lo stato della storia — usali nei nodi condizione e set flag</div>
