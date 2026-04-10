@@ -6945,6 +6945,10 @@ const FC = (function(){
         selectedNodeId=id;
         renderNodeList();
         renderNodeDetail(id);
+      } else if(_settingsPanelOpen){
+        // Impostazioni aperte, stesso nodo: forza apertura detail
+        saveSettingsIfOpen();
+        renderNodeDetail(id);
       }
 
       // Su mobile: secondo tap sullo stesso nodo collassa/espande la mappa
@@ -11954,6 +11958,7 @@ function sfRenderFlags(){
 
 function saveSettingsIfOpen(){
   if(!_settingsPanelOpen)return;
+  _settingsPanelOpen=false;
   const titleEl=$('sf-title'),startEl=$('sf-start'),speedEl=$('sf-speed'),pauseEl=$('sf-pause'),fadeEl=$('sf-fade'),textColorEl=$('sf-textColor'),bgEl=$('sf-bg'),showHudEl=$('sf-showhud');
   if(!titleEl)return; // pannello non più nel DOM
   currentStory.title=titleEl.value;
