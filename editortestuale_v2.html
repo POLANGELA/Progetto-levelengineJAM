@@ -467,12 +467,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-base);font-
 .continue-hint{position:absolute;bottom:5%;font-size:clamp(7px,1.3vw,10px);letter-spacing:0.5em;color:#404060;text-transform:uppercase;animation:blink-slow 2.5s ease-in-out infinite}
 @keyframes blink-slow{0%,100%{opacity:0.2}50%{opacity:0.6}}
 
-/* Timer */
-#timerDisplay{position:absolute;bottom:22%;left:50%;transform:translateX(-50%);z-index:25;display:none;flex-direction:column;align-items:center;gap:4px}
-#timerDisplay.active{display:flex}
-#timerNum{font-size:clamp(18px,4vw,32px);letter-spacing:0.2em;color:#553333;font-style:italic}
-#timerTrack{width:120px;height:1px;background:#111}
-#timerFill{height:100%;background:#553333;transition:width 0.1s linear;width:100%}
+
 
 /* Tension display */
 #tensionOverlay{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity 1s}
@@ -1257,7 +1252,7 @@ body.mobile-mode .ef-label{
 .t-ending{color:#e87070!important}.t-minigame{color:#70a8e8!important}
 .t-text{color:#70d4a8!important}.t-character{color:#e8c070!important}
 .t-condition{color:#d4e870!important}.t-random{color:#70e8cc!important}
-.t-timer{color:#e87088!important}.t-setflag{color:#70a0e8!important}
+.t-setflag{color:#70a0e8!important}
 .t-effect{color:#c870e8!important}.t-inventory{color:#70e890!important}
 .t-checkpoint{color:#a870e8!important}.t-media{color:#70b8e8!important}
 .t-audio{color:#e8a870!important}.t-parser{color:#88e8b0!important}
@@ -2361,11 +2356,7 @@ body.mobile-mode .ef-label{
         <div id="speakerName"></div>
       </div>
 
-      <!-- Timer -->
-      <div id="timerDisplay">
-        <div id="timerNum">10</div>
-        <div id="timerTrack"><div id="timerFill"></div></div>
-      </div>
+
 
       <div id="textAccelIndicator" style="display:none!important"></div>
 
@@ -2450,7 +2441,7 @@ body.mobile-mode .ef-label{
         <div id="edEmptyState">
           <div class="empty-icon">✦</div>
           <div>Seleziona un nodo</div>
-          <div class="empty-sub">testo · minigame · ending<br>personaggio · condizione · timer<br>effetto · flag · inventario · random</div>
+          <div class="empty-sub">testo · minigame · ending<br>personaggio · condizione<br>effetto · flag · inventario · random</div>
         </div>
       </div>
       <div id="wordStylingPanel">
@@ -3378,33 +3369,6 @@ function triggerEffect(type,duration){
 }
 
 // ═══════════════════════════════════════════════════
-//  TIMER NODE
-// ═══════════════════════════════════════════════════
-function runTimer(config){
-  return new Promise(resolve=>{
-    const td=$('timerDisplay');
-    const tn=$('timerNum');
-    const tf=$('timerFill');
-    td.classList.add('active');
-    let secs=config.seconds||10;
-    let total=secs;
-    let interval;
-    tn.textContent=secs;tf.style.width='100%';
-    interval=setInterval(()=>{
-      secs--;
-      tn.textContent=secs;
-      tf.style.width=(secs/total*100)+'%';
-      if(secs<=0){clearInterval(interval);td.classList.remove('active');resolve('timeout');}
-    },1000);
-    // Listen for tap if tapToSkip
-    if(config.tapToSkip){
-      function handler(e){e.preventDefault();clearInterval(interval);td.classList.remove('active');document.removeEventListener('pointerdown',handler);resolve('tapped');}
-      setTimeout(()=>document.addEventListener('pointerdown',handler),300);
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════════
 //  MINIGAME — SHARED RESET UTIL
 // ═══════════════════════════════════════════════════
 function resetMinigameUI(){
@@ -3733,14 +3697,10 @@ function playTapRaceGame(config){
     }
     function onTap(e){e.preventDefault();taps++;ct.textContent=taps;}
     tapzone.addEventListener('pointerdown',onTap);
-    // Countdown
-    const timerTrack=$('timerDisplay');
-    const timerNum=$('timerNum');const timerFill=$('timerFill');
-    timerTrack.classList.add('active');
-    timerNum.textContent=secs;timerFill.style.width='100%';
+    // Countdown interno
     let elapsed=0;const iv=setInterval(()=>{
-      elapsed++;timerNum.textContent=secs-elapsed;timerFill.style.width=((secs-elapsed)/secs*100)+'%';
-      if(elapsed>=secs){clearInterval(iv);timerTrack.classList.remove('active');done();}
+      elapsed++;
+      if(elapsed>=secs){clearInterval(iv);done();}
     },1000);
   });
 }
@@ -4898,33 +4858,6 @@ async function runNode(nodeId){
         break;
       }
 
-      case 'timer':{
-        if(node.message){ phrase.style.opacity='1'; await typeText(phrase, node.message, undefined, id); if(isStale(id)) return; }
-        // Se agganciato a una meccanica countdown: usa i suoi parametri e avvia il suo interval
-        if(node.countdownMechId && mechState[node.countdownMechId]){
-          const cMech = (currentStory.mechanics||{})[node.countdownMechId];
-          // Costruisci config dal countdownMech
-          const cConfig = {
-            seconds: cMech.duration ?? 30,
-            tapToSkip: node.tapToSkip,
-            timeoutNext: cMech.endNode || node.timeoutNext,
-          };
-          // Avvia il countdown della meccanica (gestisce HUD + warning + endNode)
-          startCountdownMechanic(node.countdownMechId);
-          const timerResult = await runTimer(cConfig);
-          stopCountdownMechanic(node.countdownMechId);
-          await fadeOutText(phrase, undefined, id); if(isStale(id)) return;
-          if(timerResult==='tapped' && node.tapNext) await runNode(node.tapNext);
-          else await runNode(cMech.endNode || node.timeoutNext || node.next || getAutoNext(nodeId));
-        } else {
-          const timerResult = await runTimer(node);
-          await fadeOutText(phrase, undefined, id); if(isStale(id)) return;
-          if(timerResult==='tapped' && node.tapNext) await runNode(node.tapNext);
-          else await runNode(node.timeoutNext || node.next || getAutoNext(nodeId));
-        }
-        break;
-      }
-
       case 'inventory':{
         if(node.action==='add' && node.item){
           // Crea il nuovo item (o aggiorna quello esistente con lo stesso ID)
@@ -5599,7 +5532,6 @@ async function runNode(nodeId){
         $('npcSpriteAscii').hidden=true; $('npcSpriteAscii').textContent='';
         $('choices').classList.remove('dialog-mode');
         resetMinigameUI();
-        $('timerDisplay').classList.remove('active');
         $('combatBars').classList.remove('active');
         updateInventoryHud(); updateHud();
         await waitRaw(500);
@@ -5754,7 +5686,6 @@ function startGame(){
   $('dialogBox').classList.remove('visible');$('dialogBox').style.display='none';
   $('npcSprite').className='';$('npcSprite').style.display='none';
   $('npcSpriteImg').hidden=true;$('npcSpriteImg').src='';$('npcSpriteAscii').hidden=true;$('npcSpriteAscii').textContent='';
-  $('timerDisplay').classList.remove('active');
   $('combatBars').classList.remove('active');
   // Reset minigame sub-elements to default state
   $('mg-arena').style.display='flex';
@@ -5788,21 +5719,13 @@ function startGame(){
 let mechState = {}; // { mechId: { value, firedOnce } }
 
 function initMechanics(){
-  // Ferma tutti i countdown attivi prima di resettare
-  Object.values(mechState).forEach(st=>{
-    if(st.countdownInterval){ clearInterval(st.countdownInterval); }
-  });
   mechState = {};
   const mechs = currentStory.mechanics || {};
   Object.entries(mechs).forEach(([id, mech]) => {
-    // countdown: il valore iniziale è la durata in secondi
-    const startVal = mech.template === 'countdown'
-      ? (mech.duration ?? 30)
-      : (mech.start ?? 0);
+    const startVal = mech.start ?? 0;
     mechState[id] = {
       value: startVal,
-      firedOnce: false,
-      countdownInterval: null  // slot per l'interval attivo
+      firedOnce: false
     };
   });
   renderMechHud();
@@ -5814,7 +5737,7 @@ function mechGet(id){
 }
 
 // Modify a mechanic's value by delta (or set it)
-// mode: 'add' | 'subtract' | 'set' | 'multiply' | 'reset' | 'start_countdown' | 'stop_countdown' | 'set_flag' | 'clear_flag'
+// mode: 'add' | 'subtract' | 'set' | 'multiply' | 'reset' | 'set_flag' | 'clear_flag'
 function mechChange(id, delta, mode){
   mode = mode || 'add';
   const mech = (currentStory.mechanics||{})[id];
@@ -5822,10 +5745,6 @@ function mechChange(id, delta, mode){
   const st = mechState[id];
   const min = mech.min ?? -Infinity;
   const max = mech.max ?? Infinity;
-
-  // Operazioni speciali countdown
-  if(mode === 'start_countdown'){ startCountdownMechanic(id); return; }
-  if(mode === 'stop_countdown'){  stopCountdownMechanic(id);  return; }
 
   // Operazioni speciali flag_group
   if(mode === 'set_flag'){
@@ -5841,8 +5760,7 @@ function mechChange(id, delta, mode){
   else if(mode === 'subtract') st.value = clamp(st.value - delta, min, max);
   else if(mode === 'multiply') st.value = clamp(st.value * delta, min, max);
   else if(mode === 'reset'){
-    const startVal = mech.template === 'countdown' ? (mech.duration ?? 30) : (mech.start ?? 0);
-    st.value = clamp(startVal, min, max);
+    st.value = clamp(mech.start ?? 0, min, max);
   }
   else st.value = clamp(st.value + delta, min, max);
 
@@ -5922,38 +5840,6 @@ async function checkChanceTriggers(nodeId){
   return false;
 }
 
-// Avvia il conto alla rovescia di una meccanica countdown
-// Usato dal nodo timer quando aggancia una meccanica countdown
-function startCountdownMechanic(mechId){
-  const mech = (currentStory.mechanics||{})[mechId];
-  const st = mechState[mechId];
-  if(!mech || !st || mech.template !== 'countdown') return;
-  // Ferma eventuale interval già attivo
-  if(st.countdownInterval){ clearInterval(st.countdownInterval); st.countdownInterval=null; }
-  // Reset valore alla durata
-  st.value = mech.duration ?? 30;
-  renderMechHud();
-  st.countdownInterval = setInterval(async ()=>{
-    st.value = Math.max(0, st.value - 1);
-    renderMechHud();
-    // Effetto warning
-    if(mech.warningAt != null && mech.warningEffect && st.value === mech.warningAt){
-      triggerEffect(mech.warningEffect, 600);
-    }
-    if(st.value <= 0){
-      clearInterval(st.countdownInterval);
-      st.countdownInterval = null;
-      // Vai al nodo allo scadere configurato nella meccanica
-      if(mech.endNode) await runNode(mech.endNode);
-    }
-  }, 1000);
-}
-
-function stopCountdownMechanic(mechId){
-  const st = mechState[mechId];
-  if(st?.countdownInterval){ clearInterval(st.countdownInterval); st.countdownInterval = null; }
-}
-
 // Render the mechanics HUD (counters/stats with showHud:true)
 function _renderMechHudFiltered(filter){
   // filter: null = show all (respects mech.showHud); array = only show those mechIds
@@ -5986,19 +5872,9 @@ function _renderMechHudFiltered(filter){
     const val = (typeof mechState !== 'undefined' && mechState[id]) ? (mechState[id]?.value ?? mech.start ?? 0) : (mech.start ?? 0);
     const max = mech.max;
     const isBar = (mech.template === 'stat') && max;
-    const isCountdown = mech.template === 'countdown';
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.6);border:1px solid #1e1e1e;padding:4px 8px;font-family:var(--font-mono)';
-    if(isCountdown){
-      const dur = mech.duration ?? 30;
-      const pct = Math.round(Math.max(0,Math.min(1,val/dur))*100);
-      const isWarning = mech.warningAt != null && val <= mech.warningAt;
-      wrap.appendChild(_mechIcon(mech,'\u23F3'));
-      const track=document.createElement('div');track.style.cssText='width:60px;height:4px;background:#111;border:1px solid #222;position:relative';
-      const fill=document.createElement('div');fill.style.cssText='position:absolute;inset:0;transition:width 0.9s linear';fill.style.width=pct+'%';fill.style.background=isWarning?'#883333':'#336633';
-      track.appendChild(fill);wrap.appendChild(track);
-      const num=document.createElement('span');num.style.cssText='font-size:9px;letter-spacing:0.1em';num.style.color=isWarning?'#aa5555':'#556655';num.textContent=val+'s';wrap.appendChild(num);
-    } else if(isBar){
+    if(isBar){
       const pct=Math.round(Math.max(0,Math.min(1,(val-(mech.min||0))/((max)-(mech.min||0))))*100);
       const isDanger=mech.dangerThreshold!=null&&val<=mech.dangerThreshold;
       wrap.appendChild(_mechIcon(mech,'\u{1F4CA}'));
@@ -6027,13 +5903,9 @@ function _renderMechHudFiltered(filter){
   Object.entries(mechs).forEach(function(e2){var id=e2[0],mech=e2[1];
     if(!mech.showHud)return;if(filter!==null&&filter.indexOf(id)<0)return;
     var val=(mechState[id]?mechState[id].value:undefined);if(val==null)val=mech.start||0;
-    var max=mech.max,isBar=(mech.template==='stat')&&max,isCountdown=mech.template==='countdown';
+    var max=mech.max,isBar=(mech.template==='stat')&&max;
     var wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.6);border:1px solid #1e1e1e;padding:4px 8px;font-family:var(--font-mono)';
-    if(isCountdown){var dur=mech.duration||30,pct=Math.round(Math.max(0,Math.min(100,val/dur*100))),isW=mech.warningAt!=null&&val<=mech.warningAt;
-      wrap.appendChild(_mechIconEl(mech));var track=document.createElement('div');track.style.cssText='width:60px;height:4px;background:#111;border:1px solid #222;position:relative';
-      var fill=document.createElement('div');fill.style.cssText='position:absolute;inset:0;transition:width 0.9s linear';fill.style.width=pct+'%';fill.style.background=isW?'#883333':'#336633';
-      track.appendChild(fill);wrap.appendChild(track);var num=document.createElement('span');num.style.cssText='font-size:9px;letter-spacing:0.1em';num.style.color=isW?'#aa5555':'#556655';num.textContent=val+'s';wrap.appendChild(num);
-    }else if(isBar){var min0=mech.min||0,pct2=Math.round(Math.max(0,Math.min(100,(val-min0)/(max-min0)*100))),isD=mech.dangerThreshold!=null&&val<=mech.dangerThreshold;
+    if(isBar){var min0=mech.min||0,pct2=Math.round(Math.max(0,Math.min(100,(val-min0)/(max-min0)*100))),isD=mech.dangerThreshold!=null&&val<=mech.dangerThreshold;
       wrap.appendChild(_mechIconEl(mech));var track2=document.createElement('div');track2.style.cssText='width:60px;height:4px;background:#111;border:1px solid #222;position:relative';
       var fill2=document.createElement('div');fill2.style.cssText='position:absolute;inset:0;transition:width 0.4s';fill2.style.width=pct2+'%';fill2.style.background=isD?'#883333':'#336633';
       track2.appendChild(fill2);wrap.appendChild(track2);var lbl=document.createElement('span');lbl.style.cssText='font-size:7px;letter-spacing:0.1em';lbl.style.color=isD?'#aa5555':'#556655';lbl.textContent=mech.hudLabel||mech.name;wrap.appendChild(lbl);
@@ -6064,7 +5936,6 @@ const NODE_TYPES=[
   {type:'condition',icon:'🔀',name:'condizione',desc:'Biforcazione basata su flag'},
   {type:'setflag',icon:'⚑',name:'set flag',desc:'Imposta una variabile flag'},
   {type:'random',icon:'🎲',name:'random',desc:'Percorso casuale/pesato'},
-  {type:'timer',icon:'⏱',name:'timer',desc:'Conto alla rovescia'},
   {type:'effect',icon:'✨',name:'effetto',desc:'Glitch · shake · flash · colore'},
   {type:'inventory',icon:'🎒',name:'inventario',desc:'Aggiungi/rimuovi/controlla item'},
   {type:'checkpoint',icon:'📍',name:'checkpoint',desc:'Punto di salvataggio'},
@@ -6217,7 +6088,7 @@ const FC = (function(){
   const NW=148, NH=42;
   const COLORS={
     text:'#70d4a8',character:'#e8c070',minigame:'#70a8e8',ending:'#e87070',
-    condition:'#c090f0',setflag:'#f0c060',random:'#f09050',timer:'#70d0d0',
+    condition:'#c090f0',setflag:'#f0c060',random:'#f09050',
     effect:'#d0d090',inventory:'#90c890',checkpoint:'#90b0d0',parser:'#c0a870',
     combat:'#e89090',media:'#90b0e8',audio:'#b090e8'
   };
@@ -6260,8 +6131,6 @@ const FC = (function(){
         n.winThreshold&&n.rounds ? (n.winThreshold+'/'+n.rounds) : '');
       if(n.loseNext)   add(id,n.loseNext,  'perde',   'loseNext', null,'');
       if(n.fleeNext)   add(id,n.fleeNext,  'fuga',    'fleeNext', null,'');
-      if(n.timeoutNext)add(id,n.timeoutNext,'scade', 'timeoutNext',null,
-        n.countdownMechId?n.countdownMechId:'');
       if(n.tapNext)    add(id,n.tapNext,   'tap',     'tapNext',  null,'');
       if(n.hasNext)    add(id,n.hasNext,   'ha',      'hasNext',  null, n.item?n.item:'');
       if(n.lacksNext)  add(id,n.lacksNext, 'non ha',  'lacksNext',null, n.item?n.item:'');
@@ -6605,7 +6474,7 @@ const FC = (function(){
     const type=fn.type||'text',opts=[];
 
     // Every node that has a 'next' field (single successor)
-    const hasNext=['text','character','effect','setflag','timer','audio','media','checkpoint','parser','inventory','random'];
+    const hasNext=['text','character','effect','setflag','audio','media','checkpoint','parser','inventory','random'];
     if(hasNext.includes(type))opts.push({v:'next',l:'\u2192 nodo successivo',cls:'fc-ok'});
 
     if(type==='condition'){
@@ -6617,10 +6486,9 @@ const FC = (function(){
       opts.push({v:'loseNext',l:'\u{1F480} sconfitta',cls:'fc-danger'});
       if(type==='combat')opts.push({v:'fleeNext',l:'\u{1F3C3} fuga'});
     }
-    if(type==='timer'){
-      opts.push({v:'timeoutNext',l:'\u23F0 allo scadere del timer'});
+
+    if(type==='timer')
       opts.push({v:'tapNext',    l:'\u{1F446} se tappato prima dello scadere'});
-    }
     if(type==='inventory'){
       opts.push({v:'hasNext',  l:'\u2713 ha l\'oggetto',cls:'fc-ok'});
       opts.push({v:'lacksNext',l:'\u2717 non ha l\'oggetto',cls:'fc-danger'});
@@ -7018,12 +6886,6 @@ function getMechOps(template){
         {v:'subtract', l:'− diminuisci'},
         {v:'set',      l:'= imposta a'},
         {v:'reset',    l:'↺ reset (valore iniziale)'},
-      ];
-    case 'countdown':
-      return [
-        {v:'start_countdown', l:'▶ avvia timer'},
-        {v:'stop_countdown',  l:'⏹ ferma timer'},
-        {v:'reset',           l:'↺ reset (ricarica durata)'},
       ];
     case 'reputation':
     case 'relationship':
@@ -7545,7 +7407,7 @@ function renderNodeDetail(nodeId){
           const selMech = ch.mechId ? (currentStory.mechanics||{})[ch.mechId] : null;
           const tpl = selMech?.template || '';
           const ops = getMechOps(tpl);
-          const needsValue = !['reset','start_countdown','stop_countdown'].includes(ch.mode||'add');
+          const needsValue = !['reset'].includes(ch.mode||'add');
           const isFlagGroup = tpl === 'flag_group';
           const flagOpts = isFlagGroup ? (selMech.flags||[]) : [];
           return `
@@ -7596,7 +7458,7 @@ function renderNodeDetail(nodeId){
           const selMech = node.mechId ? (currentStory.mechanics||{})[node.mechId] : null;
           const tpl = selMech?.template || '';
           const ops = getMechOps(tpl);
-          const noValue = ['reset','start_countdown','stop_countdown'].includes(node.mechMode||'set');
+          const noValue = ['reset'].includes(node.mechMode||'set');
           const isFlagOp = ['set_flag','clear_flag'].includes(node.mechMode||'set');
           const flagOpts = tpl==='flag_group' ? (selMech?.flags||[]) : [];
           return `<div class="ef-row" style="margin-top:8px">
@@ -7683,38 +7545,7 @@ function renderNodeDetail(nodeId){
     html+=`<button class="ef-mini-btn" id="nf-add-opt">+ aggiungi opzione</button></div>`;
   }
 
-  // ─── TIMER ───
-  if(node.type==='timer'){
-    const countdownMechs = Object.entries(currentStory.mechanics||{}).filter(([,m])=>m.template==='countdown');
-    html+=`
-      <div class="ef-group">
-        <div class="ef-group-title">timer</div>
-        ${countdownMechs.length ? `
-        <div class="ef-label">meccanica countdown (opzionale)</div>
-        <div class="ef-hint" style="margin-bottom:6px">se collegato, usa durata, avviso e nodo-scadere dalla meccanica — ignora i campi sotto</div>
-        <select class="ef-select" id="nf-countdown-mech">
-          <option value="">— nessuna (usa parametri propri) —</option>
-          ${countdownMechs.map(([mid,m])=>`<option value="${mid}" ${node.countdownMechId===mid?'selected':''}>${m.icon||'⏳'} ${m.name||mid}</option>`).join('')}
-        </select>` : `<div class="ef-hint" style="color:#335;margin-bottom:6px">nessuna meccanica countdown — creane una nel pannello ⚙ Meccaniche per una gestione avanzata del timer</div>`}
-        <div class="ef-label">messaggio durante il timer</div>
-        <input class="ef-input" id="nf-message" value="${esc(node.message||'')}" placeholder="il tempo sta scadendo...">
-        <div class="ef-row" style="margin-top:8px">
-          <div>
-            <div class="ef-label">secondi (se non agganciato)</div>
-            <input class="ef-input" id="nf-seconds" type="number" value="${node.seconds||10}" min="1" max="60">
-          </div>
-          <div>
-            <div class="ef-label">tap anticipa</div>
-            <select class="ef-select" id="nf-tapskip">
-              <option value="true" ${node.tapToSkip!==false?'selected':''}>sì</option>
-              <option value="false" ${node.tapToSkip===false?'selected':''}>no</option>
-            </select>
-          </div>
-        </div>
-        ${nodeSelect('nf-timeout-next',node.timeoutNext||'','allo scadere → vai a (se non agganciato)')}
-        ${nodeSelect('nf-tap-next',node.tapNext||'','al tap (se abilitato) → vai a')}
-      </div>`;
-  }
+
 
   // ─── INVENTORY ───
   if(node.type==='inventory'){
@@ -8682,10 +8513,6 @@ function attachDetailEvents(nodeId){
     if(newType==='condition'){ if(!n.flag) n.flag=''; }
     if(newType==='random'){
       if(!n.options) n.options=[{next:'',weight:1},{next:'',weight:1}];
-    }
-    if(newType==='timer'){
-      if(!n.seconds) n.seconds=10;
-      if(n.tapToSkip===undefined) n.tapToSkip=true;
     }
     if(newType==='inventory'){ if(!n.action) n.action='add'; }
     if(newType==='effect'){
@@ -10376,7 +10203,7 @@ function saveCurrentNode(nodeId){
         const i=parseInt(row.dataset.midx);
         const mechId=row.querySelector('.nf-mch-id')?.value||'';
         const mode=row.querySelector('.nf-mch-mode')?.value||'add';
-        const noValue=['reset','start_countdown','stop_countdown'].includes(mode);
+        const noValue=['reset'].includes(mode);
         const isFlagOp=['set_flag','clear_flag'].includes(mode);
         const flagName=row.querySelector('.nf-mch-flag')?.value||'';
         const delta=noValue||isFlagOp ? (isFlagOp ? flagName : 0) : (parseFloat(row.querySelector('.nf-mch-delta')?.value)||0);
@@ -10390,7 +10217,7 @@ function saveCurrentNode(nodeId){
   const tapSkip=$('nf-tapskip');if(tapSkip)node.tapToSkip=tapSkip.value!=='false';
   const timeoutNext=$('nf-timeout-next');if(timeoutNext)node.timeoutNext=timeoutNext.value||undefined;
   const tapNext=$('nf-tap-next');if(tapNext)node.tapNext=tapNext.value||undefined;
-  const countdownMechSel=$('nf-countdown-mech');if(countdownMechSel)node.countdownMechId=countdownMechSel.value||undefined;
+  
 
   // Inventory
   const invAction=$('nf-inv-action');if(invAction)node.action=invAction.value;
@@ -10640,7 +10467,6 @@ $('confirmAddNode').addEventListener('click',()=>{
     minigame:{type:'minigame',subtype:'orbit',rounds:5,difficulty:1,winThreshold:3,winNext:'',loseNext:''},    condition:{type:'condition',flag:'',trueNext:'',falseNext:''},
     setflag:{type:'setflag',flag:(currentStory.flags||[])[0]||'',value:true,next:''},
     random:{type:'random',options:[{next:'',weight:1},{next:'',weight:1}]},
-    timer:{type:'timer',seconds:10,tapToSkip:true,timeoutNext:'',message:''},
     effect:{type:'effect',effect:'shake',duration:500,next:''},
     inventory:{type:'inventory',action:'add',item:'🗝️',itemName:'oggetto',next:''},
     checkpoint:{type:'checkpoint',next:''},
@@ -10670,11 +10496,6 @@ const MECH_TEMPLATES = [
   { id:'flag_group',   cat:'variabili',   icon:'🚩', name:'gruppo flag',         desc:'insieme di flag correlati. Ogni flag viene aggiunto automaticamente alla lista Flag della storia.',
     defaults:{ name:'scoperte', flags:[] },
     nodeHint: 'Aggiungi i flag qui: vengono sincronizzati <b>automaticamente</b> nella lista Flag della storia. Usa nodi <b>SetFlag</b> per attivarli e nodi <b>Condizione</b> (tipo: flag) per verificarli. Utile per raggruppare flag correlati (es. tutti gli oggetti trovati, tutte le stanze visitate).' },
-
-  // ── TIMER & TEMPO ──
-  { id:'countdown',    cat:'tempo',       icon:'⏳', name:'conto alla rovescia', desc:'timer che conta verso zero. Allo scadere va a un nodo specifico.',
-    defaults:{ name:'timer round', duration:30, endNode:'', showHud:true, hudLabel:'tempo', warningAt:10, warningEffect:'shake' },
-    nodeHint: 'Crea un nodo <b>Timer</b> nella storia e seleziona questa meccanica nel campo <em>meccanica countdown</em>. Il nodo Timer userà automaticamente la durata, l\'effetto avviso e il nodo-scadere configurati qui. La barra countdown compare nella HUD della storia (se abilitata). Il campo <em>secondi</em> del nodo Timer viene ignorato se la meccanica è agganciata.' },
 
   // ── LOGICA ──
   { id:'event_trigger',cat:'logica',      icon:'⚡', name:'trigger evento',      desc:'quando un flag diventa vero o un nodo viene raggiunto, salta a un altro nodo.',
@@ -10858,29 +10679,6 @@ function renderMechDetail(id){
         <button class="mech-rule-del mech-flag-del" data-idx="${i}">×</button>
       </div>`).join('')}
       <button class="mech-add-rule-btn" id="md-add-flag">＋ aggiungi flag</button>
-    </div>`;
-  }
-
-  if(t==='countdown'){
-    html+=`
-    <div class="mech-section">
-      <div class="mech-section-title">⏱️ parametri timer</div>
-      <div class="mech-prop-row">
-        <div><div class="ef-label">durata (secondi)</div><input class="ef-input" id="md-duration" type="number" value="${mech.duration??30}" min="1"></div>
-        <div><div class="ef-label">avviso a (sec)</div><input class="ef-input" id="md-warnat" type="number" value="${mech.warningAt??10}" min="0"></div>
-      </div>
-      <div class="ef-label">effetto avviso</div>
-      <select class="ef-select" id="md-warneff">
-        <option value="">nessuno</option>
-        ${['flash','shake','glitch','pulse'].map(e=>`<option value="${e}" ${mech.warningEffect===e?'selected':''}>${e}</option>`).join('')}
-      </select>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="md-pausable" ${mech.pausable?'checked':''} style="width:auto"><span class="ef-label" style="margin:0">può essere messo in pausa</span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input type="checkbox" id="md-showhud" ${mech.showHud?'checked':''} style="width:auto"><span class="ef-label" style="margin:0">mostra nella storia</span></label>
-    </div>
-    <div class="mech-section">
-      <div class="mech-section-title">🔗 allo scadere</div>
-      <div class="ef-label">nodo da raggiungere</div>
-      <select class="ef-select" id="md-endnode">${nodeOpts(mech.endNode||'')}</select>
     </div>`;
   }
 
