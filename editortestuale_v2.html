@@ -6723,7 +6723,6 @@ const FC = (function(){
       }}]:[]),
       '-',
       {l:'\u2715 elimina nodo',cls:'fc-danger',fn:()=>{
-        if(!confirm('Eliminare "'+id+'"?'))return;
         delete currentStory.nodes[id];
         if(currentStory._fcPositions)delete currentStory._fcPositions[id];
         if(selectedNodeId===id){selectedNodeId=null;document.getElementById('edDetail').innerHTML='<div id="edEmptyState"><div>\u2190 seleziona un nodo</div></div>';}
@@ -9444,7 +9443,6 @@ function attachDetailEvents(nodeId){
   });
 
   $('nf-delete')?.addEventListener('click',()=>{
-    if(!confirm(`Eliminare "${nodeId}"?`))return;
     delete currentStory.nodes[nodeId];selectedNodeId=null;
     renderNodeList();$('edDetail').innerHTML='<div id="edEmptyState"><div>← seleziona un nodo</div></div>';
   });
