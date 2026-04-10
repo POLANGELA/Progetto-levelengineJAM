@@ -75,7 +75,9 @@ body::after {
 /* CRT flicker */
 @keyframes crtFlicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.88} 94%{opacity:1} }
 body { animation:crtFlicker 8s step-end infinite }
+/* Disabilita effetti CRT quando l'editor è aperto */
 body.editor-open { animation:none }
+body.editor-open::after { display:none }
 
 /* ═══ TICKER ═══ */
 .ticker { background:var(--cyan); overflow:hidden; white-space:nowrap; border-bottom:3px solid var(--black) }
@@ -466,7 +468,7 @@ nav::before { left:0 } nav::after { right:0 }
 
 /* ═══ EDITOR OVERLAY ═══ */
 #editorOverlay {
-  display:none; position:fixed; inset:0; z-index:800;
+  display:none; position:fixed; inset:0; z-index:10000;
   background:#000; flex-direction:column;
 }
 #editorOverlay.on { display:flex }
