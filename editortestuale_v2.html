@@ -2414,6 +2414,9 @@ body.mobile-mode .ef-label{
       <div class="tb-sep"></div>
       <button class="ed-tool-btn accent" id="tbPlay">▶ Testa</button>
       <button class="ed-tool-btn warn" id="tbReset">↺ Reset</button>
+      <button class="ed-tool-btn" id="tbSaveNcj" style="color:var(--green)" title="Salva tutto su file .ncj (storia + audio + immagini)">💾 Salva .ncj</button>
+      <button class="ed-tool-btn" id="tbLoadNcj" style="color:var(--amber)" title="Carica file .ncj — ripristina esattamente come salvato">📂 Carica .ncj</button>
+      <input type="file" id="ncjFileInput" accept=".ncj,.ncj.json" style="display:none">
       <button class="ed-tool-btn" id="tbExport" style="color:var(--blue)">📦 Esporta</button>
       <button class="ed-tool-btn" id="tbChangeDevice" title="Cambia dispositivo" style="color:var(--text-dim)">mob/desk</button>
     </div>
@@ -13001,6 +13004,294 @@ $('tbExport').addEventListener('click', async ()=>{
   btn.textContent = '📦 esporta gioco';
   btn.disabled = false;
 });
+
+// ═══════════════════════════════════════════════════════════════════
+//  FORMATO BINARIO .NCJ — CONTAINER REALE
+//  Struttura del file (little-endian):
+//    [0..3]   magic   "NCJ1"  (4 byte ASCII)
+//    [4..7]   hdrLen  uint32  (lunghezza header JSON in byte)
+//    [8..hdrLen+7]   header JSON  {version, saved, title, story, assets:[...]}
+//    [hdrLen+8 ..]   payload binario  (tutti i blob concatenati, zero base64)
+//  Ogni asset = blob grezzo → file ~33% più piccolo del vecchio JSON+base64.
+// ═══════════════════════════════════════════════════════════════════
+
+// ── Encode: costruisce il buffer binario .ncj ────────────────────
+async function _ncjEncode(story) {
+  const assetList = [];
+
+  async function collectIDB(storeName) {
+    const records = await _idbGetAll(storeName).catch(() => []);
+    for(const rec of records) {
+      if(!rec.blob) continue;
+      const entry = { id: rec.id, store: storeName, type: rec.type||rec.blob.type||'application/octet-stream', name: rec.name||rec.id, blob: rec.blob };
+      if(rec.npcId  !== undefined) entry.npcId  = rec.npcId;
+      if(rec.width  !== undefined) entry.width  = rec.width;
+      if(rec.height !== undefined) entry.height = rec.height;
+      assetList.push(entry);
+    }
+  }
+  await Promise.all([collectIDB('audio_assets'), collectIDB('media_assets'), collectIDB('sprite_assets')]);
+
+  function mergeMemBlobs(memObj, storeName) {
+    if(!memObj) return;
+    for(const [id, asset] of Object.entries(memObj)) {
+      if(assetList.some(a => a.id === id && a.store === storeName)) continue;
+      let blob = asset.blob;
+      if(!blob && asset.data && asset.data.startsWith('data:')) blob = _dataUriToBlob(asset.data);
+      if(!blob) continue;
+      const entry = { id, store: storeName, type: asset.type||blob.type||'application/octet-stream', name: asset.name||id, blob };
+      if(asset.npcId  !== undefined) entry.npcId  = asset.npcId;
+      if(asset.width  !== undefined) entry.width  = asset.width;
+      if(asset.height !== undefined) entry.height = asset.height;
+      assetList.push(entry);
+    }
+  }
+  mergeMemBlobs(window.audioAssets,  'audio_assets');
+  mergeMemBlobs(window.mediaAssets,  'media_assets');
+  mergeMemBlobs(window.spriteAssets, 'sprite_assets');
+
+  const buffers = [];
+  let offset = 0;
+  const assetMeta = [];
+  for(const entry of assetList) {
+    const ab = await entry.blob.arrayBuffer();
+    buffers.push(ab);
+    const meta = { id: entry.id, store: entry.store, type: entry.type, name: entry.name, offset, size: ab.byteLength };
+    if(entry.npcId  !== undefined) meta.npcId  = entry.npcId;
+    if(entry.width  !== undefined) meta.width  = entry.width;
+    if(entry.height !== undefined) meta.height = entry.height;
+    assetMeta.push(meta);
+    offset += ab.byteLength;
+  }
+
+  const header = { version: 2, saved: new Date().toISOString(), title: story.title||'storia', story, assets: assetMeta };
+  const headerBytes = new TextEncoder().encode(JSON.stringify(header));
+
+  const totalSize = 4 + 4 + headerBytes.byteLength + offset;
+  const out = new Uint8Array(totalSize);
+  const dv  = new DataView(out.buffer);
+  // magic "NCJ1"
+  out[0]=78; out[1]=67; out[2]=74; out[3]=49;
+  dv.setUint32(4, headerBytes.byteLength, true);
+  out.set(headerBytes, 8);
+  let pOff = 8 + headerBytes.byteLength;
+  for(const ab of buffers) { out.set(new Uint8Array(ab), pOff); pOff += ab.byteLength; }
+  return out.buffer;
+}
+
+// ── Decode: legge il buffer .ncj e restituisce {story, assets} ────
+function _ncjDecode(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  const magic = String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3));
+  if(magic !== 'NCJ1') {
+    // Compatibilità con il vecchio formato JSON
+    try {
+      const old = JSON.parse(new TextDecoder().decode(arrayBuffer));
+      if(old._ncj && old.story) return { _legacyJson: old };
+    } catch(e) {}
+    throw new Error('File .ncj non valido (formato non riconosciuto).');
+  }
+  const hdrLen = dv.getUint32(4, true);
+  const header = JSON.parse(new TextDecoder().decode(new Uint8Array(arrayBuffer, 8, hdrLen)));
+  if(!header.story || !header.story.nodes || !header.story.startNode)
+    throw new Error('Header .ncj corrotto: storia mancante.');
+  const payloadStart = 8 + hdrLen;
+  const assets = (header.assets || []).map(meta => {
+    const bytes = new Uint8Array(arrayBuffer, payloadStart + meta.offset, meta.size);
+    return { meta, blob: new Blob([bytes], { type: meta.type||'application/octet-stream' }) };
+  });
+  return { story: header.story, assets };
+}
+
+// ═══ SALVA .NCJ (formato binario reale) ═══════════════════════════
+$('tbSaveNcj').addEventListener('click', async () => {
+  const btn = $('tbSaveNcj');
+  btn.textContent = '⏳ salvo...';
+  btn.disabled = true;
+  try {
+    if(selectedNodeId) saveCurrentNode(selectedNodeId);
+    const story = JSON.parse(JSON.stringify(currentStory));
+    const buffer = await _ncjEncode(story);
+    const safe = (story.title||'storia').replace(/[^a-zA-Z0-9_\-àèìòù ]/g,'').replace(/\s+/g,'_').slice(0,40) || 'progetto';
+    const fileName = safe + '.ncj';
+
+    // Usa File System Access API se disponibile (Chrome desktop/Android ≥ 86)
+    // — garantisce l'estensione corretta senza che il browser la rinomini
+    if(window.showSaveFilePicker) {
+      try {
+        const fh = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'NeverCode Project', accept: { 'application/octet-stream': ['.ncj'] } }],
+        });
+        const ws = await fh.createWritable();
+        await ws.write(buffer);
+        await ws.close();
+        btn.textContent = '✓ salvato!';
+        setTimeout(() => { btn.textContent = '💾 Salva .ncj'; btn.disabled = false; }, 1800);
+        return;
+      } catch(fsErr) {
+        if(fsErr.name === 'AbortError') { btn.textContent = '💾 Salva .ncj'; btn.disabled = false; return; }
+        // fallthrough al metodo classico
+      }
+    }
+
+    // Fallback: <a download>
+    // Su Chrome Android il browser può rinominare il file aggiungendo .json
+    // se non riconosce l'estensione. Per evitarlo convertiamo il buffer in
+    // data URI base64 — il browser non può sniffare il tipo da un data URI
+    // e rispetta il nome impostato in download.
+    try {
+      // Percorso 1: data URI base64 (più affidabile su mobile)
+      const uint8 = new Uint8Array(buffer);
+      let binary = '';
+      for(let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+      const b64 = btoa(binary);
+      const dataUri = 'data:application/octet-stream;base64,' + b64;
+      const a2 = document.createElement('a');
+      a2.href = dataUri; a2.download = fileName;
+      document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+    } catch(b64Err) {
+      // Percorso 2: blob URL classico (per file molto grandi dove btoa va in OOM)
+      const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    }
+    btn.textContent = '✓ salvato!';
+    setTimeout(() => { btn.textContent = '💾 Salva .ncj'; btn.disabled = false; }, 1800);
+  } catch(e) {
+    console.error('[NCJ SAVE]', e);
+    alert('Errore salvataggio .ncj: ' + e.message);
+    btn.textContent = '💾 Salva .ncj';
+    btn.disabled = false;
+  }
+});
+
+// ═══ CARICA .NCJ (formato binario reale) ══════════════════════════
+$('tbLoadNcj').addEventListener('click', () => {
+  $('ncjFileInput').value = '';
+  $('ncjFileInput').click();
+});
+
+$('ncjFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const btn = $('tbLoadNcj');
+  btn.textContent = '⏳ carico...';
+  btn.disabled = true;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const decoded = _ncjDecode(arrayBuffer);
+
+    let story, assetsToRestore;
+
+    if(decoded._legacyJson) {
+      // Vecchio formato JSON — compatibilità
+      const old = decoded._legacyJson;
+      story = old.story;
+      assetsToRestore = [];
+      function legacyParse(obj, storeName) {
+        if(!obj) return;
+        for(const [id, asset] of Object.entries(obj)) {
+          if(!asset.data) continue;
+          const blob = _dataUriToBlob(asset.data);
+          if(!blob) continue;
+          const meta = { id, store: storeName, type: asset.type||'', name: asset.name||id };
+          if(asset.npcId  !== undefined) meta.npcId  = asset.npcId;
+          if(asset.width  !== undefined) meta.width  = asset.width;
+          if(asset.height !== undefined) meta.height = asset.height;
+          assetsToRestore.push({ meta, blob });
+        }
+      }
+      legacyParse(old.audioAssets,  'audio_assets');
+      legacyParse(old.mediaAssets,  'media_assets');
+      legacyParse(old.spriteAssets, 'sprite_assets');
+    } else {
+      story = decoded.story;
+      assetsToRestore = decoded.assets;
+    }
+
+    if(!confirm(`Caricare "${story.title || 'storia'}"?\nQuesto sostituirà il progetto corrente.`)) {
+      btn.textContent = '📂 Carica .ncj'; btn.disabled = false; return;
+    }
+
+    // Svuota store IDB vecchi
+    await Promise.all(['audio_assets','media_assets','sprite_assets'].map(storeName =>
+      _openIDB().then(db => new Promise(res => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.objectStore(storeName).clear();
+        tx.oncomplete = res; tx.onerror = res;
+      })).catch(()=>{})
+    ));
+
+    window.audioAssets  = {};
+    window.mediaAssets  = {};
+    window.spriteAssets = {};
+    const storeToMem = { 'audio_assets': window.audioAssets, 'media_assets': window.mediaAssets, 'sprite_assets': window.spriteAssets };
+
+    for(const { meta, blob } of assetsToRestore) {
+      const record = { id: meta.id, blob, type: meta.type||blob.type||'', name: meta.name||meta.id };
+      if(meta.npcId  !== undefined) record.npcId  = meta.npcId;
+      if(meta.width  !== undefined) record.width  = meta.width;
+      if(meta.height !== undefined) record.height = meta.height;
+      await _idbPut(meta.store, record).catch(()=>{});
+      const blobUrl = URL.createObjectURL(blob);
+      const memEntry = { blob, url: blobUrl, type: meta.type||'', name: meta.name||meta.id };
+      if(meta.npcId  !== undefined) memEntry.npcId  = meta.npcId;
+      if(meta.width  !== undefined) memEntry.width  = meta.width;
+      if(meta.height !== undefined) memEntry.height = meta.height;
+      const mem = storeToMem[meta.store];
+      if(mem) mem[meta.id] = memEntry;
+    }
+
+    // Ripristina URL negli NPC e nei nodi
+    if(story.npcs) {
+      for(const npc of Object.values(story.npcs)) {
+        if(npc.spriteId && window.spriteAssets[npc.spriteId])
+          npc.spriteUrl = window.spriteAssets[npc.spriteId].url;
+      }
+    }
+    if(story.nodes) {
+      for(const node of Object.values(story.nodes)) {
+        if(node.mediaAssetId && window.mediaAssets[node.mediaAssetId])
+          node.mediaUrl = window.mediaAssets[node.mediaAssetId].url;
+        if(node.audioAssetId && window.audioAssets[node.audioAssetId])
+          node.audioUrl = window.audioAssets[node.audioAssetId].url;
+        if(node.itemImageAssetId && window.spriteAssets[node.itemImageAssetId])
+          node.itemImageUrl = window.spriteAssets[node.itemImageAssetId].url;
+      }
+    }
+
+    currentStory   = story;
+    selectedNodeId = null;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(JSON.parse(JSON.stringify(story)))); } catch(e2){}
+
+    restoreSpritesForEditor(currentStory);
+    renderNodeList();
+    renderNodeDetail(null);
+    if(typeof renderFlowChart === 'function') renderFlowChart();
+    if(typeof renderSettingsPanel === 'function' && _settingsPanelOpen) renderSettingsPanel();
+
+    btn.textContent = '✓ caricato!';
+    setTimeout(() => { btn.textContent = '📂 Carica .ncj'; btn.disabled = false; }, 1800);
+
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f2a0f;border:1px solid #4a7a4a;color:#88bb88;font-family:var(--font-mono);font-size:8px;letter-spacing:0.25em;padding:8px 18px;z-index:99999;pointer-events:none;text-transform:uppercase';
+    notice.textContent = '✓ progetto ripristinato da .ncj';
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 2800);
+
+  } catch(e) {
+    console.error('[NCJ LOAD]', e);
+    alert('Errore caricamento .ncj: ' + e.message);
+    btn.textContent = '📂 Carica .ncj';
+    btn.disabled = false;
+  }
+});
+
+
 
 $('tbChangeDevice').addEventListener('click', ()=>{
   // Resetta la preferenza e mostra il modale
