@@ -12241,8 +12241,6 @@ $('tbSettings').addEventListener('click',()=>{
     const addFlag = ()=>{
       const val = flagInput.value.trim().replace(/\s/g,'_').toLowerCase();
       if(!val){
-        alert('Scrivi un nome per il flag prima di premere AGGIUNGI!');
-        flagInput.focus();
         return;
       }
       if(!currentStory.flags) currentStory.flags = [];
@@ -12256,7 +12254,6 @@ $('tbSettings').addEventListener('click',()=>{
       flagInput.value = '';
       sfRenderFlags();
       flagInput.focus();
-      alert('Flag "' + val + '" aggiunto con successo!');
     };
     
     flagAddBtn.addEventListener('click', addFlag);
