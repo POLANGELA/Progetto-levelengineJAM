@@ -1091,7 +1091,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
             <div class="drop-zone" id="up-drop">
               <input type="file" id="up-file" accept=".html,.htm">
               <div class="drop-main">CLICCA O TRASCINA IL FILE .HTML</div>
-              <div class="drop-sub">Solo file HTML &mdash; max 5 MB</div>
+              <div class="drop-sub">Solo file HTML &mdash; max 75 MB</div>
               <div class="drop-chosen" id="up-chosen"></div>
             </div>
           </div>
@@ -1103,7 +1103,7 @@ footer { background:var(--black); border-top:2px solid var(--cyan); padding:28px
               <div class="drop-chosen" id="up-cover-chosen"></div>
             </div>
             <div class="cover-hint">
-              Dimensione consigliata: <strong>460 × 345 px</strong> (rapporto 4:3) &mdash; Formati: JPG, PNG, GIF, WEBP &mdash; Max <strong>500 KB</strong><br>
+              Dimensione consigliata: <strong>460 × 345 px</strong> (rapporto 4:3) &mdash; Formati: JPG, PNG, GIF, WEBP &mdash; Max <strong>2 MB</strong><br>
               L'immagine diventa lo sfondo della tua card nella galleria. Le GIF animate sono supportate.
             </div>
           </div>
@@ -1958,10 +1958,10 @@ async function uploadGame(){
   if(!title) return toast('TITOLO MANCANTE','err');
   if(!file)  return toast('SELEZIONA UN FILE','err');
   if(!file.name.match(/\.html?$/i)) return toast('SOLO FILE .HTML','err');
-  if(file.size>5*1024*1024) return toast('MAX 5MB','err');
+  if(file.size>75*1024*1024) return toast('MAX 75MB','err');
   if(cover){
     if(!cover.type.startsWith('image/')) return toast('COPERTINA: SOLO IMMAGINI','err');
-    if(cover.size>500*1024) return toast('COPERTINA MAX 500KB','err');
+    if(cover.size>2*1024*1024) return toast('COPERTINA MAX 2MB','err');
   }
   const btn=document.getElementById('up-submit');
   const bar=document.getElementById('up-progress');
