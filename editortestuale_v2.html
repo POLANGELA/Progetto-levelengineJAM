@@ -11758,38 +11758,36 @@ function sfRenderFlags(){
   }
 }
 
+function _readSettingsFromDOM(){
+  if(!$('sf-title'))return;
+  if(!currentStory.settings)currentStory.settings={};
+  const s2=currentStory.settings;
+  currentStory.title=$('sf-title').value||currentStory.title;
+  if($('sf-start'))currentStory.startNode=$('sf-start').value;
+  if($('sf-speed'))s2.typeSpeed=parseInt($('sf-speed').value)||45;
+  if($('sf-pause'))s2.linePause=parseInt($('sf-pause').value)||1400;
+  if($('sf-fade'))s2.fadeTime=parseInt($('sf-fade').value)||1200;
+  if($('sf-textColor'))s2.textColor=$('sf-textColor').value||'#e0e0e0';
+  if($('sf-fontFamily')){s2.fontFamily=$('sf-fontFamily').value||'Space Mono';applyGlobalFont(s2.fontFamily);}
+  if($('sf-bg'))s2.bgEffect=$('sf-bg').value;
+  if($('sf-inv-size'))s2.invIconSize=Math.min(64,Math.max(16,parseInt($('sf-inv-size').value)||28));
+  if($('sf-splash-enabled'))s2.splashEnabled=$('sf-splash-enabled').value==='true';
+  if($('sf-splash-title'))s2.splashTitle=$('sf-splash-title').value;
+  if($('sf-splash-subtitle'))s2.splashSubtitle=$('sf-splash-subtitle').value;
+  if($('sf-splash-button'))s2.splashButton=$('sf-splash-button').value||'Inizia';
+  if($('sf-splash-titleColor'))s2.splashTitleColor=$('sf-splash-titleColor').value;
+  if($('sf-splash-subtitleColor'))s2.splashSubtitleColor=$('sf-splash-subtitleColor').value;
+  if($('sf-splash-buttonColor'))s2.splashButtonColor=$('sf-splash-buttonColor').value;
+  if($('sf-splash-bg-data'))s2.splashBg=$('sf-splash-bg-data').value||'';
+  if($('sf-splash-bgOpacity'))s2.splashBgOpacity=parseFloat($('sf-splash-bgOpacity').value)||0.3;
+  if($('sf-splash-particles'))s2.splashParticles=$('sf-splash-particles').value||'stars';
+  if($('sf-splash-duration'))s2.splashDuration=parseInt($('sf-splash-duration').value)||800;
+}
+
 function saveSettingsIfOpen(){
   if(!_settingsPanelOpen)return;
   _settingsPanelOpen=false;
-  const titleEl=$('sf-title'),startEl=$('sf-start'),speedEl=$('sf-speed'),pauseEl=$('sf-pause'),fadeEl=$('sf-fade'),textColorEl=$('sf-textColor'),bgEl=$('sf-bg'),showHudEl=$('sf-showhud');
-  if(!titleEl)return; // pannello non più nel DOM
-  currentStory.title=titleEl.value;
-  currentStory.startNode=startEl.value;
-  if(!currentStory.settings)currentStory.settings={};
-  const s2=currentStory.settings;
-  s2.typeSpeed=parseInt(speedEl.value)||45;
-  s2.linePause=parseInt(pauseEl.value)||1400;
-  s2.fadeTime=parseInt(fadeEl.value)||1200;
-  s2.textColor=textColorEl.value||'#e0e0e0';
-  s2.bgEffect=bgEl.value;
-  const fontEl=$('sf-fontFamily');if(fontEl)s2.fontFamily=fontEl.value||'Space Mono';
-  // customFont data is saved live on upload; preserve it here
-  s2.showHud=showHudEl.value==='true';
-  const invSizeEl=$('sf-inv-size');if(invSizeEl)s2.invIconSize=Math.min(64,Math.max(16,parseInt(invSizeEl.value)||28));
-  // Splash fields
-  const splashEnabledEl=$('sf-splash-enabled');if(splashEnabledEl)s2.splashEnabled=splashEnabledEl.value==='true';
-  const splashTitleEl=$('sf-splash-title');if(splashTitleEl)s2.splashTitle=splashTitleEl.value||currentStory.title;
-  const splashSubEl=$('sf-splash-subtitle');if(splashSubEl)s2.splashSubtitle=splashSubEl.value;
-  const splashBtnEl=$('sf-splash-button');if(splashBtnEl)s2.splashButton=splashBtnEl.value||'Inizia';
-  const splashTCEl=$('sf-splash-titleColor');if(splashTCEl)s2.splashTitleColor=splashTCEl.value||'#e0e0e0';
-  const splashSCEl=$('sf-splash-subtitleColor');if(splashSCEl)s2.splashSubtitleColor=splashSCEl.value||'#888888';
-  const splashBCEl=$('sf-splash-buttonColor');if(splashBCEl)s2.splashButtonColor=splashBCEl.value||'#aaaaaa';
-  const splashBgDataEl=$('sf-splash-bg-data');if(splashBgDataEl)s2.splashBg=splashBgDataEl.value||'';
-  const splashOpEl=$('sf-splash-bgOpacity');if(splashOpEl)s2.splashBgOpacity=parseFloat(splashOpEl.value)||0.3;
-  const splashPartEl=$('sf-splash-particles');if(splashPartEl)s2.splashParticles=splashPartEl.value||'stars';
-  const splashDurEl=$('sf-splash-duration');if(splashDurEl)s2.splashDuration=parseInt(splashDurEl.value)||800;
-  // Applica font live se cambiato
-  const _fEl=$('sf-fontFamily');if(_fEl)applyGlobalFont(s2.fontFamily);
+  _readSettingsFromDOM();
 }
 
 $('tbSettings').addEventListener('click',()=>{
@@ -11927,8 +11925,9 @@ $('tbSettings').addEventListener('click',()=>{
   // Auto-save su ogni campo impostazioni — stessa logica dei nodi
   // (viene attaccato dopo che innerHTML è stato scritto, quindi i campi esistono nel DOM)
   document.querySelectorAll('#edDetail input, #edDetail textarea, #edDetail select').forEach(el=>{
-    el.addEventListener('change', ()=>{ saveSettingsIfOpen(); autoSave(); });
-    el.addEventListener('blur',   ()=>{ saveSettingsIfOpen(); autoSave(); });
+    el.addEventListener('input',  ()=>{ if(_settingsPanelOpen){ _readSettingsFromDOM(); autoSave(); } });
+    el.addEventListener('change', ()=>{ if(_settingsPanelOpen){ _readSettingsFromDOM(); autoSave(); } });
+    el.addEventListener('blur',   ()=>{ if(_settingsPanelOpen){ _readSettingsFromDOM(); autoSave(); } });
   });
   // Populate the flag manager inside settings
   sfRenderFlags();
@@ -13987,6 +13986,8 @@ function autoSave(immediate){
 
 function _doSave(){
   try {
+    // Se il pannello impostazioni è aperto, salva sempre i valori dal DOM prima di esportare
+    if(_settingsPanelOpen) _readSettingsFromDOM();
     if(selectedNodeId) saveCurrentNode(selectedNodeId);
     // Salva media/audio in IndexedDB (asincrono, nessun limite pratico)
     saveAudioAssets();
