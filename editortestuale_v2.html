@@ -12977,11 +12977,14 @@ function applyNodeFont(fontName){
   const dlUrl = URL.createObjectURL(blob);
   const a     = document.createElement('a');
   a.href      = dlUrl;
+  a.style.display = 'none';
   const safe  = storyTitle.replace(/[^a-zA-Z0-9_\-]/g,'_').toLowerCase() || 'storia';
   a.download  = safe + '_gioco.html';
   document.body.appendChild(a);
+  // Delay necessario per Firefox: il click deve avvenire dopo che l'elemento è nel DOM
+  await new Promise(r => setTimeout(r, 0));
   a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(dlUrl); a.remove(); }, 1000);
+  setTimeout(()=>{ URL.revokeObjectURL(dlUrl); a.remove(); }, 30000);
 
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f2a0f;border:1px solid #4a7a4a;color:#88bb88;font-family:var(--font-mono);font-size:8px;letter-spacing:0.22em;padding:10px 22px;z-index:99999;pointer-events:none;text-transform:uppercase;text-align:center;line-height:1.8';
@@ -13115,8 +13118,9 @@ $('tbSaveNcj').addEventListener('click', async () => {
     const fileName = safe + '.ncj';
 
     // Usa File System Access API se disponibile (Chrome desktop/Android ≥ 86)
-    // — garantisce l'estensione corretta senza che il browser la rinomini
-    if(window.showSaveFilePicker) {
+    // — NON usare su Firefox: supporto instabile e blocca il fallback
+    const isFirefox = typeof InstallTrigger !== 'undefined' || navigator.userAgent.toLowerCase().includes('firefox');
+    if(window.showSaveFilePicker && !isFirefox) {
       try {
         const fh = await window.showSaveFilePicker({
           suggestedName: fileName,
@@ -13134,29 +13138,49 @@ $('tbSaveNcj').addEventListener('click', async () => {
       }
     }
 
-    // Fallback: <a download>
-    // Su Chrome Android il browser può rinominare il file aggiungendo .json
-    // se non riconosce l'estensione. Per evitarlo convertiamo il buffer in
-    // data URI base64 — il browser non può sniffare il tipo da un data URI
-    // e rispetta il nome impostato in download.
+    // Fallback universale: Blob URL con <a download>
+    // Funziona su Firefox, Safari, Chrome mobile e desktop.
+    // NON usare btoa su file binari grandi (OOM su Firefox/Safari).
+    function _triggerDownload(url, name) {
+      return new Promise(resolve => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        // Su Firefox il click() deve avvenire in un tick separato
+        // dopo che l'elemento è nel DOM, altrimenti viene ignorato.
+        setTimeout(() => {
+          a.click();
+          // Rimuovi dopo un breve delay per dare tempo al browser di avviare il download
+          setTimeout(() => {
+            document.body.removeChild(a);
+            resolve();
+          }, 200);
+        }, 0);
+      });
+    }
+
     try {
-      // Percorso 1: data URI base64 (più affidabile su mobile)
-      const uint8 = new Uint8Array(buffer);
-      let binary = '';
-      for(let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-      const b64 = btoa(binary);
-      const dataUri = 'data:application/octet-stream;base64,' + b64;
-      const a2 = document.createElement('a');
-      a2.href = dataUri; a2.download = fileName;
-      document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
-    } catch(b64Err) {
-      // Percorso 2: blob URL classico (per file molto grandi dove btoa va in OOM)
       const blob = new Blob([buffer], { type: 'application/octet-stream' });
       const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = fileName;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      await _triggerDownload(url, fileName);
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch(blobErr) {
+      // Ultimo tentativo: data URI base64 (per ambienti senza createObjectURL)
+      try {
+        const uint8 = new Uint8Array(buffer);
+        let binary = '';
+        const chunkSize = 8192;
+        for(let i = 0; i < uint8.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, uint8.subarray(i, i + chunkSize));
+        }
+        const b64 = btoa(binary);
+        const dataUri = 'data:application/octet-stream;base64,' + b64;
+        await _triggerDownload(dataUri, fileName);
+      } catch(e2) {
+        throw e2;
+      }
     }
     btn.textContent = '✓ salvato!';
     setTimeout(() => { btn.textContent = '💾 Salva .ncj'; btn.disabled = false; }, 1800);
